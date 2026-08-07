@@ -3,7 +3,12 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <!-- Telegram keshlab olmasligi uchun no-cache teglari -->
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+    <meta http-equiv="Pragma" content="no-cache">
+    <meta http-equiv="Expires" content="0">
     <title>SMART ARENA</title>
+    
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
 
     <style>
@@ -27,6 +32,7 @@
             font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
             -webkit-tap-highlight-color: transparent;
             user-select: none;
+            touch-action: manipulation;
         }
 
         body { 
@@ -147,10 +153,6 @@
             cursor: pointer; 
             text-align: left; 
             font-size: 14px; 
-        }
-
-        .option-btn:active {
-            background: rgba(255,255,255,0.2);
         }
 
         .option-btn.correct { background: var(--green) !important; border-color: var(--green); }
@@ -358,23 +360,29 @@
 </div>
 
 <script>
-    // Telegram SDK
-    try {
-        if (window.Telegram && window.Telegram.WebApp) {
-            window.Telegram.WebApp.ready();
-            window.Telegram.WebApp.expand();
-        }
-    } catch (e) {}
+    // Xavfsiz yuklanish varianti
+    window.onload = function() {
+        try {
+            if (window.Telegram && window.Telegram.WebApp) {
+                window.Telegram.WebApp.ready();
+                setTimeout(() => {
+                    window.Telegram.WebApp.expand();
+                }, 100);
+            }
+        } catch (e) {}
 
-    let tg = window.Telegram?.WebApp;
-    let userName = tg?.initDataUnsafe?.user?.first_name || "O'yinchi";
-    document.getElementById('userName').innerText = userName;
-    document.getElementById('rankUserName').innerText = "1. " + userName;
-    document.getElementById('certUserName').innerText = userName;
+        let tg = window.Telegram?.WebApp;
+        let userName = tg?.initDataUnsafe?.user?.first_name || "O'yinchi";
+        document.getElementById('userName').innerText = userName;
+        document.getElementById('rankUserName').innerText = "1. " + userName;
+        document.getElementById('certUserName').innerText = userName;
+
+        let userScore = parseInt(localStorage.getItem('smart_arena_score') || '0');
+        document.getElementById('totalScore').innerText = userScore + ' pt';
+        document.getElementById('rankUserScore').innerText = userScore + ' pt';
+    };
 
     let userScore = parseInt(localStorage.getItem('smart_arena_score') || '0');
-    document.getElementById('totalScore').innerText = userScore + ' pt';
-    document.getElementById('rankUserScore').innerText = userScore + ' pt';
 
     function updateScore(pts) {
         userScore += pts;
@@ -406,7 +414,6 @@
         showTab('sec-arena', document.getElementById('tab-arena'));
     }
 
-    // --- TEST LOGIKASI ---
     let currentQ = 1;
     let timeLeft = 15;
     let activeQuestions = [];
@@ -487,7 +494,6 @@
         }, 1000);
     }
 
-    // --- MINI O'YINLAR ---
     function playSpin() {
         let reward = [30, 50, 100, 150][Math.floor(Math.random() * 4)];
         updateScore(reward);
@@ -518,12 +524,3 @@
         let b = Math.floor(Math.random() * 10) + 1;
         let ans = a + b;
         document.getElementById('taQuestion').innerText = `${a} + ${b} = ?`;
-        let opts = [ans, ans + 2, ans - 1, ans + 3].sort(() => Math.random() - 0.5);
-        let container = document.getElementById('taAnswers');
-        container.innerHTML = '';
-        opts.forEach(opt => {
-            let btn = document.createElement('button');
-            btn.type = 'button';
-            btn.className = 'option-btn';
-            btn.innerText = opt;
-            btn.oncl
