@@ -72,23 +72,20 @@
             background: var(--card-bg); 
             padding: 4px; 
             border-radius: 12px; 
-            overflow-x: auto;
         }
 
         .tab { 
             flex: 1; 
-            padding: 10px 4px; 
+            padding: 12px 4px; 
             border: none; 
             background: transparent; 
             color: var(--text-muted); 
             font-weight: 600; 
-            font-size: 11px; 
+            font-size: 12px; 
             cursor: pointer; 
             border-radius: 8px;
             text-align: center;
-            white-space: nowrap;
-            position: relative;
-            z-index: 10;
+            outline: none;
         }
 
         .tab.active { 
@@ -103,7 +100,7 @@
         }
 
         .section.active { 
-            display: flex; 
+            display: flex !important; 
         }
 
         .categories-list {
@@ -121,13 +118,11 @@
             justify-content: space-between; 
             align-items: center; 
             cursor: pointer;
-            position: relative;
-            z-index: 10;
         }
 
         .card:active {
-            opacity: 0.8;
-            transform: scale(0.98);
+            opacity: 0.7;
+            background: #1e293b;
         }
 
         .quiz-box { 
@@ -153,12 +148,11 @@
             cursor: pointer; 
             text-align: left; 
             font-size: 14px; 
-            position: relative;
-            z-index: 10;
+            outline: none;
         }
 
         .option-btn:active {
-            background: rgba(255,255,255,0.15);
+            background: rgba(255,255,255,0.2);
         }
 
         .option-btn.correct { background: var(--green) !important; border-color: var(--green); }
@@ -173,8 +167,6 @@
             cursor: pointer; 
             font-size: 12px; 
             align-self: flex-start;
-            position: relative;
-            z-index: 10;
         }
 
         .action-btn { 
@@ -187,8 +179,6 @@
             cursor: pointer; 
             font-size: 14px; 
             width: 100%;
-            position: relative;
-            z-index: 10;
         }
 
         .cert-card { 
@@ -215,29 +205,29 @@
 
     <!-- TABLAR -->
     <div class="nav">
-        <button type="button" class="tab active" onclick="switchTab('arena', this)">🎮 Arena</button>
-        <button type="button" class="tab" onclick="switchTab('games', this)">🎯 O'yinlar</button>
-        <button type="button" class="tab" onclick="switchTab('leaderboard', this)">🏆 Reyting</button>
-        <button type="button" class="tab" onclick="switchTab('tasks', this)">🎁 Bonus</button>
+        <button type="button" class="tab active" id="tab-arena">🎮 Arena</button>
+        <button type="button" class="tab" id="tab-games">🎯 O'yinlar</button>
+        <button type="button" class="tab" id="tab-leaderboard">🏆 Reyting</button>
+        <button type="button" class="tab" id="tab-tasks">🎁 Bonus</button>
     </div>
 
-    <!-- 1. ARENA (TESTLAR) -->
-    <div id="arena" class="section active">
+    <!-- 1. ARENA -->
+    <div id="sec-arena" class="section active">
         <div style="font-size: 13px; color: var(--gold); font-weight: bold;">🔥 30 talik testlar:</div>
         <div class="categories-list">
-            <div class="card" onclick="startTest('Matematika & Mantiq')">
+            <div class="card" id="btn-math">
                 <span>🧮 Matematika & Mantiq</span>
                 <span style="color:var(--accent-blue);">30 ta ➡️</span>
             </div>
-            <div class="card" onclick="startTest('IT & Dasturlash')">
+            <div class="card" id="btn-it">
                 <span>💻 IT & Dasturlash</span>
                 <span style="color:var(--accent-blue);">30 ta ➡️</span>
             </div>
-            <div class="card" onclick="startTest('Ingliz tili')">
+            <div class="card" id="btn-eng">
                 <span>🇬🇧 Ingliz tili</span>
                 <span style="color:var(--accent-blue);">30 ta ➡️</span>
             </div>
-            <div class="card" onclick="startTest('Oʻzbekiston tarixi')">
+            <div class="card" id="btn-hist">
                 <span>🏛️ Oʻzbekiston tarixi</span>
                 <span style="color:var(--accent-blue);">30 ta ➡️</span>
             </div>
@@ -245,10 +235,10 @@
     </div>
 
     <!-- 2. MINI O'YINLAR -->
-    <div id="games" class="section">
+    <div id="sec-games" class="section">
         <div style="font-size: 13px; color: var(--gold); font-weight: bold;">⚡ Mini-o'yinlar:</div>
         <div class="categories-list">
-            <div class="card" onclick="switchTab('spin-screen')">
+            <div class="card" id="btn-spin-open">
                 <div style="display:flex; align-items:center; gap:10px;">
                     <span style="font-size:20px;">🎡</span>
                     <div>
@@ -259,7 +249,7 @@
                 <span style="color:var(--gold); font-weight:bold;">O'ynash</span>
             </div>
 
-            <div class="card" onclick="startTimeAttack()">
+            <div class="card" id="btn-ta-open">
                 <div style="display:flex; align-items:center; gap:10px;">
                     <span style="font-size:20px;">⏱️</span>
                     <div>
@@ -270,7 +260,7 @@
                 <span style="color:var(--accent-blue); font-weight:bold;">Start</span>
             </div>
 
-            <div class="card" onclick="startDuelGame()">
+            <div class="card" id="btn-duel-open">
                 <div style="display:flex; align-items:center; gap:10px;">
                     <span style="font-size:20px;">⚔️</span>
                     <div>
@@ -284,7 +274,7 @@
     </div>
 
     <!-- 3. REYTING -->
-    <div id="leaderboard" class="section">
+    <div id="sec-leaderboard" class="section">
         <div style="font-size: 13px; color: var(--gold); font-weight: bold; margin-bottom: 5px;">🏆 Kunlik Reyting:</div>
         <div class="categories-list">
             <div class="card">
@@ -295,8 +285,8 @@
     </div>
 
     <!-- 4. BONUS -->
-    <div id="tasks" class="section">
-        <div class="card" onclick="getDailyBonus()">
+    <div id="sec-tasks" class="section">
+        <div class="card" id="btn-daily-bonus">
             <div>
                 <div style="font-weight: bold;">📅 Kunlik Kirish Bonusi</div>
                 <div style="font-size: 12px; color: var(--text-muted);">Har kuni 50 ball oling</div>
@@ -306,10 +296,10 @@
     </div>
 
     <!-- TEST OYNASI -->
-    <div id="quiz-screen" class="section">
-        <button type="button" class="back-btn" onclick="backToArena()">⬅️ Orqaga</button>
+    <div id="sec-quiz" class="section">
+        <button type="button" class="back-btn" class="btn-back">⬅️ Orqaga</button>
         <div class="quiz-box">
-            <div style="display:flex; justify-space-between; font-size:12px; color:var(--text-muted); font-weight:bold;">
+            <div style="display:flex; justify-content:space-between; font-size:12px; color:var(--text-muted); font-weight:bold;">
                 <span id="quizCategoryTitle">Fan</span>
                 <span id="quizProgress">1 / 30</span>
             </div>
@@ -320,8 +310,8 @@
     </div>
 
     <!-- TIME ATTACK -->
-    <div id="ta-screen" class="section">
-        <button type="button" class="back-btn" onclick="backToArena()">⬅️ Chiqish</button>
+    <div id="sec-ta" class="section">
+        <button type="button" class="back-btn" class="btn-back">⬅️ Chiqish</button>
         <div class="quiz-box" style="text-align:center;">
             <h3 style="color: var(--gold);">⏱️ Time Attack</h3>
             <div id="taTimer" style="font-size: 28px; font-weight: bold; color: var(--accent-blue); margin: 10px 0;">30s</div>
@@ -332,8 +322,8 @@
     </div>
 
     <!-- 1V1 DUEL -->
-    <div id="duel-screen" class="section">
-        <button type="button" class="back-btn" onclick="backToArena()">⬅️ Chiqish</button>
+    <div id="sec-duel" class="section">
+        <button type="button" class="back-btn" class="btn-back">⬅️ Chiqish</button>
         <div class="quiz-box" style="text-align:center;">
             <h3 style="color: var(--accent-purple);">⚔️ 1v1 Duel Arena</h3>
             <p id="duelStatus" style="font-size: 13px; color: var(--text-muted); margin: 10px 0;">Raqib qidirilmoqda...</p>
@@ -345,18 +335,18 @@
     </div>
 
     <!-- CHARXPALAK -->
-    <div id="spin-screen" class="section">
-        <button type="button" class="back-btn" onclick="backToArena()">⬅️ Orqaga</button>
+    <div id="sec-spin" class="section">
+        <button type="button" class="back-btn" class="btn-back">⬅️ Orqaga</button>
         <div class="quiz-box" style="text-align:center; gap:15px; padding:25px;">
             <h3 style="color: var(--gold);">🎡 Omad Charxpalagi</h3>
             <div id="spinResult" style="font-size: 18px; font-weight: bold; color: var(--green);"> Sovrinni aylantiring!</div>
-            <button type="button" class="action-btn" onclick="playSpin()">Charxni Aylantirish</button>
+            <button type="button" class="action-btn" id="btn-spin-action">Charxni Aylantirish</button>
         </div>
     </div>
 
     <!-- SERTIFIKAT -->
-    <div id="cert-screen" class="section">
-        <button type="button" class="back-btn" onclick="backToArena()">⬅️ Asosiy menu</button>
+    <div id="sec-cert" class="section">
+        <button type="button" class="back-btn" class="btn-back">⬅️ Asosiy menu</button>
         <div class="cert-card">
             <div style="font-size: 10px; color: var(--accent-blue); font-weight: bold;">SMART ARENA WEB ILOVASI RASMIY SERTIFIKATI</div>
             <h2 style="color: var(--gold); font-size: 19px;">🏆 MAQTOV YORG'I</h2>
@@ -370,165 +360,156 @@
 </div>
 
 <script>
-    // Telegram SDK
-    try {
-        if (window.Telegram && window.Telegram.WebApp) {
-            window.Telegram.WebApp.ready();
-            window.Telegram.WebApp.expand();
-        }
-    } catch (e) {
-        console.log(e);
-    }
+    // Barcha Hodisalarni DOM yuklangach ulash (Nol Xatolik Bilan)
+    window.addEventListener('DOMContentLoaded', () => {
+        
+        try {
+            if (window.Telegram && window.Telegram.WebApp) {
+                window.Telegram.WebApp.ready();
+                window.Telegram.WebApp.expand();
+            }
+        } catch (e) {}
 
-    let tg = window.Telegram?.WebApp;
-    let userName = tg?.initDataUnsafe?.user?.first_name || "O'yinchi";
-    document.getElementById('userName').innerText = userName;
-    document.getElementById('rankUserName').innerText = "1. " + userName;
-    document.getElementById('certUserName').innerText = userName;
+        let tg = window.Telegram?.WebApp;
+        let userName = tg?.initDataUnsafe?.user?.first_name || "O'yinchi";
+        document.getElementById('userName').innerText = userName;
+        document.getElementById('rankUserName').innerText = "1. " + userName;
+        document.getElementById('certUserName').innerText = userName;
 
-    let userScore = parseInt(localStorage.getItem('smart_arena_score') || '0');
-    document.getElementById('totalScore').innerText = userScore + ' pt';
-    document.getElementById('rankUserScore').innerText = userScore + ' pt';
-
-    function updateScore(pts) {
-        userScore += pts;
-        localStorage.setItem('smart_arena_score', userScore);
+        let userScore = parseInt(localStorage.getItem('smart_arena_score') || '0');
         document.getElementById('totalScore').innerText = userScore + ' pt';
         document.getElementById('rankUserScore').innerText = userScore + ' pt';
-    }
 
-    function switchTab(tabId, btnElement) {
-        clearInterval(timer);
-        clearInterval(taTimerInterval);
-        document.querySelectorAll('.section').forEach(sec => sec.classList.remove('active'));
-        document.getElementById(tabId)?.classList.add('active');
-
-        if (btnElement) {
-            document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
-            btnElement.classList.add('active');
-        }
-    }
-
-    function backToArena() {
-        switchTab('arena', document.querySelector('.tab'));
-    }
-
-    // --- TESTLAR LOGIKASI (30 TA SAVOL) ---
-    let currentQ = 1;
-    let timer;
-    let timeLeft = 15;
-    let activeQuestions = [];
-    let currentCategory = "";
-
-    function startTest(category) {
-        currentCategory = category;
-        currentQ = 1;
-        activeQuestions = [];
-        
-        for(let i=1; i<=30; i++) {
-            let a = i * 2 + 1;
-            let b = i + 3;
-            let correct = a + b;
-            activeQuestions.push({
-                q: `${i}-savol (${category}): ${a} + ${b} nechiga teng?`,
-                opts: [correct.toString(), (correct+2).toString(), (correct-1).toString(), (correct+4).toString()].sort(() => Math.random() - 0.5),
-                correct: correct.toString()
-            });
+        function updateScore(pts) {
+            userScore += pts;
+            localStorage.setItem('smart_arena_score', userScore);
+            document.getElementById('totalScore').innerText = userScore + ' pt';
+            document.getElementById('rankUserScore').innerText = userScore + ' pt';
         }
 
-        switchTab('quiz-screen');
-        document.getElementById('quizCategoryTitle').innerText = category;
-        loadQuestion();
-    }
+        // TAB SWITCHING LOGIC
+        const tabs = {
+            'tab-arena': 'sec-arena',
+            'tab-games': 'sec-games',
+            'tab-leaderboard': 'sec-leaderboard',
+            'tab-tasks': 'sec-tasks'
+        };
 
-    function loadQuestion() {
-        if (currentQ > 30) {
+        function openSection(secId) {
             clearInterval(timer);
-            showCertificate();
-            return;
+            clearInterval(taTimerInterval);
+            document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+            const target = document.getElementById(secId);
+            if(target) target.classList.add('active');
         }
 
-        document.getElementById('quizProgress').innerText = `${currentQ} / 30`;
-        let qData = activeQuestions[currentQ - 1];
-        document.getElementById('quizQuestionText').innerText = qData.q;
-
-        const container = document.getElementById('quizAnswersContainer');
-        container.innerHTML = '';
-
-        qData.opts.forEach(opt => {
-            let btn = document.createElement('button');
-            btn.type = 'button';
-            btn.className = 'option-btn';
-            btn.innerText = opt;
-            btn.onclick = () => {
-                clearInterval(timer);
-                if(opt === qData.correct) {
-                    btn.classList.add('correct');
-                    updateScore(10);
-                } else {
-                    btn.classList.add('wrong');
-                }
-                setTimeout(() => { currentQ++; loadQuestion(); }, 400);
-            };
-            container.appendChild(btn);
+        Object.keys(tabs).forEach(tabId => {
+            document.getElementById(tabId).addEventListener('click', function() {
+                document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+                this.classList.add('active');
+                openSection(tabs[tabId]);
+            });
         });
 
-        resetTimer();
-    }
+        document.querySelectorAll('.btn-back').forEach(btn => {
+            btn.addEventListener('click', () => {
+                document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+                document.getElementById('tab-arena').classList.add('active');
+                openSection('sec-arena');
+            });
+        });
 
-    function resetTimer() {
-        clearInterval(timer);
-        timeLeft = 15;
-        let bar = document.getElementById('timerBar');
-        bar.style.width = '100%';
+        // TEST LOGIC
+        let currentQ = 1;
+        let timer;
+        let timeLeft = 15;
+        let activeQuestions = [];
+        let currentCategory = "";
 
-        timer = setInterval(() => {
-            timeLeft--;
-            bar.style.width = (timeLeft / 15) * 100 + '%';
-            if (timeLeft <= 0) {
+        function startTest(category) {
+            currentCategory = category;
+            currentQ = 1;
+            activeQuestions = [];
+            
+            for(let i=1; i<=30; i++) {
+                let a = i * 2 + 1;
+                let b = i + 3;
+                let correct = a + b;
+                activeQuestions.push({
+                    q: `${i}-savol (${category}): ${a} + ${b} nechiga teng?`,
+                    opts: [correct.toString(), (correct+2).toString(), (correct-1).toString(), (correct+4).toString()].sort(() => Math.random() - 0.5),
+                    correct: correct.toString()
+                });
+            }
+
+            openSection('sec-quiz');
+            document.getElementById('quizCategoryTitle').innerText = category;
+            loadQuestion();
+        }
+
+        function loadQuestion() {
+            if (currentQ > 30) {
                 clearInterval(timer);
-                currentQ++;
-                loadQuestion();
+                openSection('sec-cert');
+                document.getElementById('certPraiseText').innerText = `"${currentCategory} fanidan testni muvaffaqiyatli yakunladi!"`;
+                document.getElementById('certScore').innerText = `Umumiy natija: ${userScore} pt`;
+                return;
             }
-        }, 1000);
-    }
 
-    function showCertificate() {
-        switchTab('cert-screen');
-        document.getElementById('certPraiseText').innerText = `"${currentCategory} fanidan testni muvaffaqiyatli yakunladi!"`;
-        document.getElementById('certScore').innerText = `Umumiy natija: ${userScore} pt`;
-    }
+            document.getElementById('quizProgress').innerText = `${currentQ} / 30`;
+            let qData = activeQuestions[currentQ - 1];
+            document.getElementById('quizQuestionText').innerText = qData.q;
 
-    // --- MINI O'YINLAR LOGIKASI ---
-    function playSpin() {
-        let reward = [30, 50, 100, 150][Math.floor(Math.random() * 4)];
-        updateScore(reward);
-        document.getElementById('spinResult').innerText = `🎉 Tabriklaymiz! +${reward} pt yutdingiz!`;
-    }
+            const container = document.getElementById('quizAnswersContainer');
+            container.innerHTML = '';
 
-    let taScoreVal = 0, taTimerInterval, taTimeLeft = 30;
-    function startTimeAttack() {
-        switchTab('ta-screen');
-        taScoreVal = 0; taTimeLeft = 30;
-        document.getElementById('taScore').innerText = '0';
-        nextTaQuestion();
+            qData.opts.forEach(opt => {
+                let btn = document.createElement('button');
+                btn.type = 'button';
+                btn.className = 'option-btn';
+                btn.innerText = opt;
+                btn.onclick = () => {
+                    clearInterval(timer);
+                    if(opt === qData.correct) {
+                        btn.classList.add('correct');
+                        updateScore(10);
+                    } else {
+                        btn.classList.add('wrong');
+                    }
+                    setTimeout(() => { currentQ++; loadQuestion(); }, 300);
+                };
+                container.appendChild(btn);
+            });
 
-        clearInterval(taTimerInterval);
-        taTimerInterval = setInterval(() => {
-            taTimeLeft--;
-            document.getElementById('taTimer').innerText = taTimeLeft + 's';
-            if(taTimeLeft <= 0) {
-                clearInterval(taTimerInterval);
-                alert(`Vaqt tugadi! Natijangiz: ${taScoreVal} pt`);
-                backToArena();
-            }
-        }, 1000);
-    }
+            resetTimer();
+        }
 
-    function nextTaQuestion() {
-        let a = Math.floor(Math.random() * 10) + 1;
-        let b = Math.floor(Math.random() * 10) + 1;
-        let ans = a + b;
-        document.getElementById('taQuestion').innerText = `${a} + ${b} = ?`;
-        let opts = [ans, ans + 2, ans - 1, ans + 3].sort(() => Math.random() - 0.5);
-        let container = document.getElementById
+        function resetTimer() {
+            clearInterval(timer);
+            timeLeft = 15;
+            let bar = document.getElementById('timerBar');
+            bar.style.width = '100%';
+
+            timer = setInterval(() => {
+                timeLeft--;
+                bar.style.width = (timeLeft / 15) * 100 + '%';
+                if (timeLeft <= 0) {
+                    clearInterval(timer);
+                    currentQ++;
+                    loadQuestion();
+                }
+            }, 1000);
+        }
+
+        // CATEGORY BUTTON LISTENERS
+        document.getElementById('btn-math').addEventListener('click', () => startTest('Matematika'));
+        document.getElementById('btn-it').addEventListener('click', () => startTest('IT & Dasturlash'));
+        document.getElementById('btn-eng').addEventListener('click', () => startTest('Ingliz tili'));
+        document.getElementById('btn-hist').addEventListener('click', () => startTest('Oʻzbekiston tarixi'));
+
+        // MINI GAMES
+        document.getElementById('btn-spin-open').addEventListener('click', () => openSection('sec-spin'));
+        document.getElementById('btn-spin-action').addEventListener('click', () => {
+            let reward = [30, 50, 100, 150][Math.floor(Math.random() * 4)];
+            updateScore(reward);
+   
