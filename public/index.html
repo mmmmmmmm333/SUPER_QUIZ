@@ -1,82 +1,71 @@
-<!DOCTYPE html>
-<html lang="uz">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-    <title>SMART ARENA</title>
-    <script src="https://telegram.org/js/telegram-web-app.js"></script>
-    <!-- Reklama skripti (yuklanmasa ham sayt ishlayveradi) -->
-    <script src='//libtl.com/sdk.js' data-zone='11523147' data-sdk='show_11523147'></script>
+// Test savollari bazasi (Misol sifatida)
+const questionsData = {
+    'Matematika': [
+        { q: "1. 15 + 27 nechiga teng?", opts: ["42", "40", "45", "38"], correct: "42" },
+        { q: "2. 8 x 7 nechiga teng?", opts: ["56", "54", "64", "48"], correct: "56" },
+        { q: "3. 100 ning 25 foizi qancha?", opts: ["25", "50", "20", "30"], correct: "25" },
+        { q: "4. Square root (kvadrat ildiz) 81 nechiga teng?", opts: ["9", "8", "7", "10"], correct: "9" },
+        { q: "5. 120 / 4 nechiga teng?", opts: ["30", "25", "40", "35"], correct: "30" }
+    ],
+    'IT & Dasturlash': [
+        { q: "1. HTML nima uchun ishlatiladi?", opts: ["Sayt tuzilmasi uchun", "Dizayn berish uchun", "Ma'lumotlar bazasi uchun", "Server yaratish uchun"], correct: "Sayt tuzilmasi uchun" },
+        { q: "2. Python'da ekranga ma'lumot chiqarish kodi qaysi?", opts: ["print()", "echo()", "console.log()", "System.out.println()"], correct: "print()" },
+        { q: "3. CSS nima uchun kerak?", opts: ["Saytga stil/dizayn berish", "Mantiqiy amallar bajarish", "Ma'lumot saqlash", "Serverni sozlash"], correct: "Saytga stil/dizayn berish" }
+    ]
+};
 
-    <style>
-        :root { --bg-color: #0b0f19; --card-bg: #151c2c; --accent-blue: #3b82f6; --gold: #f59e0b; --text-main: #f3f4f6; --text-muted: #9ca3af; --border-color: #1e293b; }
-        * { margin:0; padding:0; box-sizing:border-box; font-family:sans-serif; -webkit-tap-highlight-color: transparent; }
-        body { background-color: var(--bg-color); color: var(--text-main); padding: 12px; display: flex; justify-content: center; }
-        .container { width:100%; max-width:480px; display:flex; flex-direction:column; gap:12px; }
-        .header { background: var(--card-bg); padding: 15px; border-radius: 16px; display: flex; justify-content: space-between; align-items: center; border: 1px solid var(--border-color); }
-        .nav { display: flex; gap: 4px; background: var(--card-bg); padding: 4px; border-radius: 12px; overflow-x: auto; }
-        .tab { flex:1; padding: 8px 6px; border:none; background:transparent; color:var(--text-muted); font-weight:600; font-size:11px; cursor:pointer; }
-        .tab.active { background: var(--accent-blue); color:#fff; border-radius:8px; }
-        .section { display:none; flex-direction:column; gap:10px; }
-        .section.active { display:flex; }
-        .card { background: var(--card-bg); border: 1px solid var(--border-color); padding: 14px; border-radius: 14px; display: flex; justify-content: space-between; align-items: center; cursor: pointer; }
-        .quiz-box { background: var(--card-bg); border-radius: 16px; padding: 16px; border: 1px solid var(--border-color); display: flex; flex-direction: column; gap: 12px; }
-        .option-btn { background: rgba(255,255,255,0.04); border:1px solid var(--border-color); padding: 12px; border-radius: 10px; color:#fff; width:100%; cursor:pointer; text-align:left; }
-    </style>
-</head>
-<body>
+let currentQuestionIndex = 0;
+let currentCategoryQuestions = [];
 
-<div class="container">
-    <div class="header">
-        <h3 id="userName">O'yinchi</h3>
-        <div id="totalScore" style="color:var(--gold); font-weight:bold;">0 pt</div>
-    </div>
-
-    <div class="nav">
-        <button class="tab active" onclick="showTab('arena', this)">🎮 Arena</button>
-        <button class="tab" onclick="showTab('games', this)">🎯 O'yinlar</button>
-    </div>
-
-    <!-- ARENA -->
-    <div id="arena" class="section active">
-        <div class="card" onclick="runAction(startQuiz)"><span>🧮 Matematika testi</span><span>➡️</span></div>
-    </div>
-
-    <!-- O'YINLAR -->
-    <div id="games" class="section">
-        <div class="card" onclick="runAction(startSpin)"><span>🎡 Omad Charxpalagi</span><span>➡️</span></div>
-    </div>
-</div>
-
-<script>
-    // ASOSIY YAXSHILANISH: Action va Reklamani ajratib qo'ydik
-    function runAction(actionCallback) {
-        // 1. Reklamani fonda yuklashga urinadi (bloklamaydi)
-        if (typeof show_11523147 === 'function') {
-            try { show_11523147(); } catch(e) {}
-        }
-        // 2. O'yinni darhol ochadi
-        actionCallback();
-    }
-
-    // O'yin funksiyalari
-    function startQuiz() {
-        alert("Matematika testi ochilmoqda...");
-    }
-
-    function startSpin() {
-        alert("Charxpalak aylantirilmoqda...");
-    }
-
-    function showTab(id, btn) {
-        document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
-        document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
-        document.getElementById(id).classList.add('active');
-        btn.classList.add('active');
-    }
+function startTest(category) {
+    // Agar tanlangan fan bo'yicha savollar bo'lmasa, standart savollar beriladi
+    currentCategoryQuestions = questionsData[category] || [
+        { q: "1. 5 + 5 nechiga teng?", opts: ["10", "12", "8", "15"], correct: "10" },
+        { q: "2. 10 - 3 nechiga teng?", opts: ["7", "6", "8", "5"], correct: "7" }
+    ];
     
-    // Telegramni ishga tushirish
-    window.Telegram?.WebApp?.ready();
-</script>
-</body>
-</html>
+    currentQuestionIndex = 0;
+    showTab('game-container');
+    loadCurrentQuestion();
+}
+
+function loadCurrentQuestion() {
+    let qData = currentCategoryQuestions[currentQuestionIndex];
+    let container = document.getElementById('game-content');
+
+    if (!qData) {
+        // Savollar tugagach
+        container.innerHTML = `
+            <h3>🎉 Test yakunlandi!</h3>
+            <p>Barcha savollarga javob berdingiz.</p>
+            <button class="action-btn" onclick="showTab('arena')">Asosiy menyuga qaytish</button>
+        `;
+        return;
+    }
+
+    let optionsHtml = qData.opts.map(opt => `
+        <button class="option-btn" onclick="checkAnswer('${opt}', '${qData.correct}', this)">${opt}</button>
+    `).join('');
+
+    container.innerHTML = `
+        <div style="font-size:12px; color:var(--text-muted);">Savol: ${currentQuestionIndex + 1} / ${currentCategoryQuestions.length}</div>
+        <div class="quiz-question">${qData.q}</div>
+        <div style="display:flex; flex-direction:column; gap:8px;">${optionsHtml}</div>
+    `;
+}
+
+function checkAnswer(selected, correct, btn) {
+    if (selected === correct) {
+        btn.classList.add('correct');
+        addScore(10); // To'g'ri javob uchun +10 ball
+    } else {
+        btn.classList.add('wrong');
+    }
+
+    // 0.5 soniyadan so'ng keyingi savolga o'tish
+    setTimeout(() => {
+        currentQuestionIndex++;
+        loadCurrentQuestion();
+    }, 500);
+}
+
