@@ -1,71 +1,134 @@
-// Test savollari bazasi (Misol sifatida)
-const questionsData = {
-    'Matematika': [
-        { q: "1. 15 + 27 nechiga teng?", opts: ["42", "40", "45", "38"], correct: "42" },
-        { q: "2. 8 x 7 nechiga teng?", opts: ["56", "54", "64", "48"], correct: "56" },
-        { q: "3. 100 ning 25 foizi qancha?", opts: ["25", "50", "20", "30"], correct: "25" },
-        { q: "4. Square root (kvadrat ildiz) 81 nechiga teng?", opts: ["9", "8", "7", "10"], correct: "9" },
-        { q: "5. 120 / 4 nechiga teng?", opts: ["30", "25", "40", "35"], correct: "30" }
-    ],
-    'IT & Dasturlash': [
-        { q: "1. HTML nima uchun ishlatiladi?", opts: ["Sayt tuzilmasi uchun", "Dizayn berish uchun", "Ma'lumotlar bazasi uchun", "Server yaratish uchun"], correct: "Sayt tuzilmasi uchun" },
-        { q: "2. Python'da ekranga ma'lumot chiqarish kodi qaysi?", opts: ["print()", "echo()", "console.log()", "System.out.println()"], correct: "print()" },
-        { q: "3. CSS nima uchun kerak?", opts: ["Saytga stil/dizayn berish", "Mantiqiy amallar bajarish", "Ma'lumot saqlash", "Serverni sozlash"], correct: "Saytga stil/dizayn berish" }
-    ]
-};
-
-let currentQuestionIndex = 0;
-let currentCategoryQuestions = [];
-
-function startTest(category) {
-    // Agar tanlangan fan bo'yicha savollar bo'lmasa, standart savollar beriladi
-    currentCategoryQuestions = questionsData[category] || [
-        { q: "1. 5 + 5 nechiga teng?", opts: ["10", "12", "8", "15"], correct: "10" },
-        { q: "2. 10 - 3 nechiga teng?", opts: ["7", "6", "8", "5"], correct: "7" }
-    ];
+<!DOCTYPE html>
+<html lang="uz">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>SMART ARENA</title>
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
     
-    currentQuestionIndex = 0;
-    showTab('game-container');
-    loadCurrentQuestion();
-}
+    <style>
+        :root {
+            --bg-color: #0b0f19; --card-bg: #151c2c; --accent-blue: #3b82f6; 
+            --accent-purple: #8b5cf6; --gold: #f59e0b; --green: #10b981; 
+            --red: #ef4444; --text-main: #f3f4f6; --text-muted: #9ca3af; --border-color: #1e293b;
+        }
+        * { margin:0; padding:0; box-sizing:border-box; font-family:sans-serif; -webkit-tap-highlight-color: transparent; }
+        body { background-color: var(--bg-color); color: var(--text-main); padding: 12px; display: flex; justify-content: center; }
+        .container { width:100%; max-width:480px; display:flex; flex-direction:column; gap:12px; padding-bottom: 30px; }
+        .quote-box { background: linear-gradient(135deg, #1e293b, #0f172a); padding: 14px; border-radius: 16px; text-align: center; border: 1px solid var(--accent-blue); font-style: italic; font-size: 13px; }
+        .header { background: var(--card-bg); padding: 15px; border-radius: 16px; display: flex; justify-content: space-between; align-items: center; border: 1px solid var(--border-color); }
+        .nav { display: flex; gap: 4px; background: var(--card-bg); padding: 4px; border-radius: 12px; overflow-x: auto; }
+        .tab { flex:1; padding: 8px 6px; border:none; background:transparent; color:var(--text-muted); font-weight:600; font-size:11px; cursor:pointer; text-align:center; }
+        .tab.active { background: var(--accent-blue); color:#fff; border-radius:8px; }
+        .section { display:none; flex-direction:column; gap:10px; }
+        .section.active { display:flex; }
+        .card { background: var(--card-bg); border: 1px solid var(--border-color); padding: 14px; border-radius: 14px; display: flex; justify-content: space-between; align-items: center; cursor: pointer; }
+        .quiz-box { background: var(--card-bg); border-radius: 16px; padding: 16px; border: 1px solid var(--border-color); display: flex; flex-direction: column; gap: 12px; }
+        .quiz-question { font-size: 15px; font-weight: bold; line-height: 1.4; }
+        .option-btn { background: rgba(255,255,255,0.04); border:1px solid var(--border-color); padding: 12px; border-radius: 10px; color:#fff; width:100%; cursor:pointer; text-align:left; font-size: 14px; }
+        .option-btn.correct { background: var(--green) !important; }
+        .option-btn.wrong { background: var(--red) !important; }
+        .back-btn { background: transparent; border: 1px solid var(--border-color); color: var(--text-muted); padding: 6px 12px; border-radius: 8px; cursor: pointer; font-size: 12px; }
+        .cert-card { background: linear-gradient(135deg, #1e1b4b 0%, #111827 100%); border: 2px solid var(--gold); border-radius: 16px; padding: 22px; text-align: center; }
+        .action-btn { background: linear-gradient(135deg, var(--accent-blue), var(--accent-purple)); color: #fff; border: none; padding: 12px; border-radius: 12px; font-weight: bold; cursor: pointer; width: 100%; }
+        .rank-badge { width: 26px; height: 26px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: bold; font-size: 12px; background: var(--border-color); color: var(--text-muted); }
+    </style>
+</head>
+<body>
 
-function loadCurrentQuestion() {
-    let qData = currentCategoryQuestions[currentQuestionIndex];
-    let container = document.getElementById('game-content');
+<div class="container">
+    <div class="quote-box">"Bilim — kelajakning kaliti."</div>
+    <div class="header">
+        <h3 id="userName">O'yinchi</h3>
+        <div id="totalScore" style="color:var(--gold); font-weight:bold;">0 pt</div>
+    </div>
 
-    if (!qData) {
-        // Savollar tugagach
-        container.innerHTML = `
-            <h3>🎉 Test yakunlandi!</h3>
-            <p>Barcha savollarga javob berdingiz.</p>
-            <button class="action-btn" onclick="showTab('arena')">Asosiy menyuga qaytish</button>
-        `;
-        return;
+    <div class="nav">
+        <button class="tab active" onclick="showTab('arena', this)">🎮 Arena</button>
+        <button class="tab" onclick="showTab('games', this)">🎯 O'yinlar</button>
+        <button class="tab" onclick="showTab('leaderboard', this)">🏆 Reyting</button>
+        <button class="tab" onclick="showTab('tasks', this)">🎁 Bonus</button>
+    </div>
+
+    <!-- ARENA -->
+    <div id="arena" class="section active">
+        <div class="card" onclick="startTest('Matematika')"><span>🧮 Matematika</span><span>➡️</span></div>
+        <div class="card" onclick="startTest('IT & Dasturlash')"><span>💻 IT</span><span>➡️</span></div>
+    </div>
+
+    <!-- O'YINLAR -->
+    <div id="games" class="section">
+        <div class="card" onclick="startSpinGame()"><span>🎡 Omad Charxpalagi</span><span>➡️</span></div>
+        <div class="card" onclick="startTimeAttack()"><span>⏱️ Tezkor Matematika</span><span>➡️</span></div>
+    </div>
+
+    <!-- REYTING -->
+    <div id="leaderboard" class="section">
+        <div class="categories-list" id="leaderboardList"></div>
+    </div>
+
+    <!-- BONUS -->
+    <div id="tasks" class="section">
+        <div class="card" onclick="claimBonus()"><span>📅 Kundalik Bonus</span><span style="color:var(--green);">+50 pt</span></div>
+    </div>
+
+    <!-- O'YIN OYNASI -->
+    <div id="game-container" class="section">
+        <button class="back-btn" onclick="showTab('arena')">⬅️ Orqaga</button>
+        <div class="quiz-box" id="game-content"></div>
+    </div>
+</div>
+
+<script>
+    let tg = window.Telegram?.WebApp;
+    tg?.ready();
+    tg?.expand();
+
+    let userName = tg?.initDataUnsafe?.user?.first_name || "O'yinchi";
+    let userId = tg?.initDataUnsafe?.user?.id || "anon";
+    let userScore = parseInt(localStorage.getItem('smart_arena_score') || '0');
+    document.getElementById('userName').innerText = userName;
+    document.getElementById('totalScore').innerText = userScore + ' pt';
+
+    function addScore(points) {
+        userScore += points;
+        localStorage.setItem('smart_arena_score', userScore);
+        document.getElementById('totalScore').innerText = userScore + ' pt';
     }
 
-    let optionsHtml = qData.opts.map(opt => `
-        <button class="option-btn" onclick="checkAnswer('${opt}', '${qData.correct}', this)">${opt}</button>
-    `).join('');
-
-    container.innerHTML = `
-        <div style="font-size:12px; color:var(--text-muted);">Savol: ${currentQuestionIndex + 1} / ${currentCategoryQuestions.length}</div>
-        <div class="quiz-question">${qData.q}</div>
-        <div style="display:flex; flex-direction:column; gap:8px;">${optionsHtml}</div>
-    `;
-}
-
-function checkAnswer(selected, correct, btn) {
-    if (selected === correct) {
-        btn.classList.add('correct');
-        addScore(10); // To'g'ri javob uchun +10 ball
-    } else {
-        btn.classList.add('wrong');
+    function showTab(id, btn) {
+        document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+        document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+        document.getElementById(id).classList.add('active');
+        if(btn) btn.classList.add('active');
+        if(id === 'leaderboard') renderLeaderboard();
     }
 
-    // 0.5 soniyadan so'ng keyingi savolga o'tish
-    setTimeout(() => {
-        currentQuestionIndex++;
-        loadCurrentQuestion();
-    }, 500);
-}
+    // O'yin funksiyalari (Reklamasiz, to'g'ridan-to'g'ri)
+    function startTest(cat) {
+        showTab('game-container');
+        document.getElementById('game-content').innerHTML = `<h3>${cat} testi</h3><p>Savol 1: 2+2 nechiga teng?</p><button class="option-btn" onclick="addScore(10); alert('To\'g\'ri!'); showTab('arena');">4</button><button class="option-btn" onclick="showTab('arena');">5</button>`;
+    }
+
+    function startSpinGame() {
+        let won = [10, 50, 100][Math.floor(Math.random()*3)];
+        addScore(won);
+        alert("🎉 Tabriklaymiz! " + won + " ball yutdingiz!");
+    }
+
+    function startTimeAttack() {
+        alert("⏱️ 30 soniya ichida iloji boricha ko'p yeching!");
+    }
+
+    function claimBonus() {
+        addScore(50);
+        alert("🎁 50 ball qo'shildi!");
+    }
+
+    function renderLeaderboard() {
+        document.getElementById('leaderboardList').innerHTML = `<div class="card"><span>1. ${userName}</span><span>${userScore} pt</span></div>`;
+    }
+</script>
+</body>
+            </html>
 
