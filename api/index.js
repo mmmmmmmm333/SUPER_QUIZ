@@ -2,42 +2,45 @@ const express = require('express');
 const cors = require('cors');
 
 const app = express();
-app.use(express.json());
 app.use(cors());
+app.use(express.json());
 
-// Foydalanuvchilar ma'lumotlari uchun xotira
-let usersDB = {};
+let usersDatabase = {};
 
-// Foydalanuvchi ma'lumotlarini olish
-app.get('/api/user/:userId', (req, res) => {
-    const userId = req.params.userId;
-    if (!usersDB[userId]) {
-        usersDB[userId] = { score: 0, sessions: 0 };
-    }
-    res.json({ success: true, data: usersDB[userId] });
-});
-
-// Ballni yangilash
+// Score yozish API
 app.post('/api/score', (req, res) => {
-    const { userId, points } = req.body;
-    if (!usersDB[userId]) {
-        usersDB[userId] = { score: 0, sessions: 0 };
+    try {
+        const { userId, name, points } = req.body;
+        if (!userId) {
+            return res.status(400).json({ success: false, message: "User ID topilmadi" });
+        }
+
+        if (usersDatabase[userId]) {
+            usersDatabase[userId].score += parseInt(points || 0);
+        } else {
+            usersDatabase[userId] = {
+                name: name || "O'yinchi",
+                score: parseInt(points || 0)
+            };
+        }
+
+        return res.json({ success: true, currentScore: usersDatabase[userId].score });
+    } catch (error) {
+        return res.status(500).json({ success: false, error: error.message });
     }
-    usersDB[userId].score += points;
-    res.json({ success: true, score: usersDB[userId].score });
 });
 
-// Reyting ro'yxati (Leaderboard)
+// Reyting API
 app.get('/api/leaderboard', (req, res) => {
-    const leaderboard = Object.keys(usersDB).map(id => ({
-        id,
-        name: `O'yinchi_${id.slice(-4)}`,
-        score: usersDB[id].score
-    })).sort((a, b) => b.score - a.score).slice(0, 10);
-    
-    res.json({ success: true, leaderboard });
+    try {
+        const leaderboard = Object.values(usersDatabase)
+            .sort((a, b) => b.score - a.score)
+            .slice(0, 10);
+
+        return res.json({ success: true, leaderboard });
+    } catch (error) {
+        return res.status(500).json({ success: false, error: error.message });
+    }
 });
 
-// Vercel Serverless Function sifatida ishlashi uchun zarur:
 module.exports = app;
-      
