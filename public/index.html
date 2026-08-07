@@ -5,43 +5,78 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
     <title>SMART ARENA</title>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <!-- Reklama skripti (yuklanmasa ham sayt ishlayveradi) -->
+    <script src='//libtl.com/sdk.js' data-zone='11523147' data-sdk='show_11523147'></script>
+
     <style>
-        :root { --bg-color: #0b0f19; --card-bg: #151c2c; --accent-blue: #3b82f6; --text-main: #fff; }
-        body { background-color: var(--bg-color); color: var(--text-main); font-family: sans-serif; padding: 20px; }
-        .card { background: var(--card-bg); padding: 20px; border-radius: 15px; margin-bottom: 15px; text-align: center; border: 1px solid #334155; }
-        button { background: var(--accent-blue); color: white; border: none; padding: 15px; border-radius: 10px; width: 100%; font-size: 16px; margin-top: 10px; }
+        :root { --bg-color: #0b0f19; --card-bg: #151c2c; --accent-blue: #3b82f6; --gold: #f59e0b; --text-main: #f3f4f6; --text-muted: #9ca3af; --border-color: #1e293b; }
+        * { margin:0; padding:0; box-sizing:border-box; font-family:sans-serif; -webkit-tap-highlight-color: transparent; }
+        body { background-color: var(--bg-color); color: var(--text-main); padding: 12px; display: flex; justify-content: center; }
+        .container { width:100%; max-width:480px; display:flex; flex-direction:column; gap:12px; }
+        .header { background: var(--card-bg); padding: 15px; border-radius: 16px; display: flex; justify-content: space-between; align-items: center; border: 1px solid var(--border-color); }
+        .nav { display: flex; gap: 4px; background: var(--card-bg); padding: 4px; border-radius: 12px; overflow-x: auto; }
+        .tab { flex:1; padding: 8px 6px; border:none; background:transparent; color:var(--text-muted); font-weight:600; font-size:11px; cursor:pointer; }
+        .tab.active { background: var(--accent-blue); color:#fff; border-radius:8px; }
+        .section { display:none; flex-direction:column; gap:10px; }
+        .section.active { display:flex; }
+        .card { background: var(--card-bg); border: 1px solid var(--border-color); padding: 14px; border-radius: 14px; display: flex; justify-content: space-between; align-items: center; cursor: pointer; }
+        .quiz-box { background: var(--card-bg); border-radius: 16px; padding: 16px; border: 1px solid var(--border-color); display: flex; flex-direction: column; gap: 12px; }
+        .option-btn { background: rgba(255,255,255,0.04); border:1px solid var(--border-color); padding: 12px; border-radius: 10px; color:#fff; width:100%; cursor:pointer; text-align:left; }
     </style>
 </head>
 <body>
-    <div style="text-align: center;">
-        <h1>SMART ARENA</h1>
-        <p>Hammasi ishlamoqda!</p>
+
+<div class="container">
+    <div class="header">
+        <h3 id="userName">O'yinchi</h3>
+        <div id="totalScore" style="color:var(--gold); font-weight:bold;">0 pt</div>
     </div>
 
-    <!-- O'yinlar -->
-    <div class="card" onclick="openGame('Matematika')">
-        <h3>🧮 Matematika testi</h3>
-        <button>O'ynash</button>
+    <div class="nav">
+        <button class="tab active" onclick="showTab('arena', this)">🎮 Arena</button>
+        <button class="tab" onclick="showTab('games', this)">🎯 O'yinlar</button>
     </div>
 
-    <div class="card" onclick="openGame('Charxpalak')">
-        <h3>🎡 Omad Charxpalagi</h3>
-        <button>Aylantirish</button>
+    <!-- ARENA -->
+    <div id="arena" class="section active">
+        <div class="card" onclick="runAction(startQuiz)"><span>🧮 Matematika testi</span><span>➡️</span></div>
     </div>
 
-    <script>
-        // Telegramni ishga tushirish
-        window.Telegram?.WebApp?.ready();
+    <!-- O'YINLAR -->
+    <div id="games" class="section">
+        <div class="card" onclick="runAction(startSpin)"><span>🎡 Omad Charxpalagi</span><span>➡️</span></div>
+    </div>
+</div>
 
-        // Xatolarni ushlash uchun funksiya
-        function openGame(name) {
-            try {
-                alert(name + " o'yini ochilmoqda...");
-                // Shu yerga o'yin logikasini qo'shasiz
-            } catch(e) {
-                alert("Xato: " + e.message);
-            }
+<script>
+    // ASOSIY YAXSHILANISH: Action va Reklamani ajratib qo'ydik
+    function runAction(actionCallback) {
+        // 1. Reklamani fonda yuklashga urinadi (bloklamaydi)
+        if (typeof show_11523147 === 'function') {
+            try { show_11523147(); } catch(e) {}
         }
-    </script>
+        // 2. O'yinni darhol ochadi
+        actionCallback();
+    }
+
+    // O'yin funksiyalari
+    function startQuiz() {
+        alert("Matematika testi ochilmoqda...");
+    }
+
+    function startSpin() {
+        alert("Charxpalak aylantirilmoqda...");
+    }
+
+    function showTab(id, btn) {
+        document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+        document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+        document.getElementById(id).classList.add('active');
+        btn.classList.add('active');
+    }
+    
+    // Telegramni ishga tushirish
+    window.Telegram?.WebApp?.ready();
+</script>
 </body>
 </html>
