@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="uz">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SUPER QUIZ Web App</title>
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #0b0f19;
+            color: #ffffff;
+            margin: 0;
+            padding: 15px;
+            display: flex;
+            justify-content: center;
+        }
+        .container {
+            width: 100%;
+            max-width: 480px;
+        }
+        .card {
+            background: #151c2c;
+            padding: 15px;
+            border-radius: 12px;
+            margin-bottom: 12px;
+            border: 1px solid #1e293b;
+        }
+        .btn {
+            width: 100%;
+            padding: 12px;
+            margin-top: 8px;
+            background: #3b82f6;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-weight: bold;
+            cursor: pointer;
+        }
+        .btn-opt {
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid #1e293b;
+            text-align: left;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Profile info -->
+        <div class="card" style="display:flex; justify-content:space-between; align-items:center;">
+            <h3 id="username">O'yinchi</h3>
+            <div style="color: #f59e0b; font-weight: bold;" id="score">0 pt</div>
+        </div>
+
+        <!-- Main Arena -->
+        <div id="quiz-box" class="card">
+            <div style="display:flex; justify-content:space-between; color:#9ca3af; font-size:12px;">
+                <span>Matematika Test</span>
+                <span id="timer">⏳ 15s</span>
+            </div>
+            <h4 id="question-text">Savol yuklanmoqda...</h4>
+            <div id="options-container"></div>
+        </div>
+    </div>
+
+    <script>
+        let tg = window.Telegram ? window.Telegram.WebApp : null;
+        if(tg) { tg.ready(); tg.expand(); }
+
+        let userId = tg && tg.initDataUnsafe && tg.initDataUnsafe.user ? tg.initDataUnsafe.user.id : "guest_123";
+        let userName = tg && tg.initDataUnsafe && tg.initDataUnsafe.user ? tg.initDataUnsafe.user.first_name : "O'yinchi";
+
+        document.getElementById('username').innerText = userName;
+
+        // Vercel backend havolasi o'zi avtomatik bog'lanadi
+        async function fetchUserData() {
+            try {
+                let res = await fetch(`/api/user/${userId}`);
+                let data = await res.json();
+                if(data.success) document.getElementById('score').innerText = data.data.score + " pt";
+            } catch(e) { console.error(e); }
+        }
+
+        async function addPoints(pts) {
+            try {
+                let res = await fetch(`/api/score`, {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({ userId: userId.toString(), points: pts })
+                });
+                let data = await res.json();
+                if(data.success) document.getElementById('score').innerText = data.score + " pt";
+            } catch(e) { console.error(e); }
+        }
+
+        // Oddiy savol chiqarish
+        function loadQuiz() {
+            let n1 = Math.floor(Math.random() * 50) + 1;
+            let n2 = Math.floor(Math.random() * 50) + 1;
+            let correct = n1 + n2;
+            
+            document.getElementById('question-text').innerText = `${n1} + ${n2} = ?`;
+            
+            let opts = [correct, correct + 2, correct - 1, correct + 5].sort(() => Math.random() - 0.5);
+            let container = document.getElementById('options-container');
+            container.innerHTML = '';
+
+            opts.forEach(opt => {
+                let btn = document.createElement('button');
+                btn.className = 'btn btn-opt';
+                btn.innerText = opt;
+                btn.onclick = () => {
+                    if(opt === correct) addPoints(10);
+                    loadQuiz();
+                };
+                container.appendChild(btn);
+            });
+        }
+
+        fetchUserData();
+        loadQuiz();
+    </script>
+</body>
+</html>
+
