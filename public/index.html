@@ -2,124 +2,365 @@
 <html lang="uz">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>SUPER QUIZ Web App</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>SMART ARENA</title>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    
+    <!-- MONETAG ASOSIY SDK SKRIPTI -->
+    <script src='//libtl.com/sdk.js' data-zone='11523147' data-sdk='show_11523147'></script>
+
     <style>
-        body {
-            font-family: Arial, sans-serif;
-            background-color: #0b0f19;
-            color: #ffffff;
-            margin: 0;
-            padding: 15px;
-            display: flex;
-            justify-content: center;
+        :root {
+            --bg-color: #0b0f19;
+            --card-bg: #151c2c;
+            --accent-blue: #3b82f6;
+            --accent-purple: #8b5cf6;
+            --gold: #f59e0b;
+            --green: #10b981;
+            --red: #ef4444;
+            --text-main: #f3f4f6;
+            --text-muted: #9ca3af;
+            --border-color: #1e293b;
         }
-        .container {
-            width: 100%;
-            max-width: 480px;
-        }
-        .card {
-            background: #151c2c;
-            padding: 15px;
-            border-radius: 12px;
-            margin-bottom: 12px;
-            border: 1px solid #1e293b;
-        }
-        .btn {
-            width: 100%;
-            padding: 12px;
-            margin-top: 8px;
-            background: #3b82f6;
-            color: white;
-            border: none;
-            border-radius: 8px;
-            font-weight: bold;
-            cursor: pointer;
-        }
-        .btn-opt {
-            background: rgba(255, 255, 255, 0.05);
-            border: 1px solid #1e293b;
-            text-align: left;
-        }
+        * { margin:0; padding:0; box-sizing:border-box; font-family:sans-serif; -webkit-tap-highlight-color: transparent; }
+        body { background-color: var(--bg-color); color: var(--text-main); padding: 12px; display: flex; justify-content: center; }
+        .container { width:100%; max-width:480px; display:flex; flex-direction:column; gap:12px; padding-bottom: 30px; }
+        
+        .quote-box { background: linear-gradient(135deg, #1e293b, #0f172a); padding: 14px; border-radius: 16px; text-align: center; border: 1px solid var(--accent-blue); font-style: italic; font-size: 13px; box-shadow: 0 4px 12px rgba(59,130,246,0.1); }
+        .header { background: var(--card-bg); padding: 15px; border-radius: 16px; display: flex; justify-content: space-between; align-items: center; border: 1px solid var(--border-color); }
+        
+        .nav { display: flex; gap: 4px; background: var(--card-bg); padding: 4px; border-radius: 12px; overflow-x: auto; }
+        .tab { flex:1; padding: 8px 6px; border:none; background:transparent; color:var(--text-muted); font-weight:600; font-size:11px; cursor:pointer; white-space: nowrap; text-align: center; }
+        .tab.active { background: var(--accent-blue); color:#fff; border-radius:8px; }
+        
+        .section { display:none; flex-direction:column; gap:10px; }
+        .section.active { display:flex; }
+        
+        .categories-list { display: flex; flex-direction: column; gap: 8px; max-height: 420px; overflow-y: auto; padding-right: 4px; }
+        .card { background: var(--card-bg); border: 1px solid var(--border-color); padding: 14px; border-radius: 14px; display: flex; justify-content: space-between; align-items: center; cursor: pointer; }
+        .card:hover { border-color: var(--accent-blue); }
+        
+        .quiz-box { background: var(--card-bg); border-radius: 16px; padding: 16px; border: 1px solid var(--border-color); display: flex; flex-direction: column; gap: 12px; }
+        .quiz-header { display: flex; justify-content: space-between; font-size: 12px; color: var(--text-muted); font-weight: bold; }
+        
+        .timer-bar { width: 100%; height: 5px; background: var(--border-color); border-radius: 3px; overflow: hidden; }
+        .timer-progress { width: 100%; height: 100%; background: var(--accent-blue); transition: width 1s linear; }
+        
+        .quiz-question { font-size: 15px; font-weight: bold; line-height: 1.4; }
+        .option-btn { background: rgba(255,255,255,0.04); border:1px solid var(--border-color); padding: 12px; border-radius: 10px; color:#fff; width:100%; cursor:pointer; text-align:left; font-size: 14px; }
+        .option-btn:hover { background: rgba(59, 130, 246, 0.1); }
+        .option-btn.correct { background: var(--green) !important; border-color: var(--green); }
+        .option-btn.wrong { background: var(--red) !important; border-color: var(--red); }
+        
+        .back-btn { background: transparent; border: 1px solid var(--border-color); color: var(--text-muted); padding: 6px 12px; border-radius: 8px; cursor: pointer; font-size: 12px; align-self: flex-start; }
+        
+        .cert-card { background: linear-gradient(135deg, #1e1b4b 0%, #111827 100%); border: 2px solid var(--gold); border-radius: 16px; padding: 22px; text-align: center; display: flex; flex-direction: column; gap: 12px; position: relative; overflow: hidden; }
+        .action-btn { background: linear-gradient(135deg, var(--accent-blue), var(--accent-purple)); color: #fff; border: none; padding: 12px; border-radius: 12px; font-weight: bold; cursor: pointer; font-size: 14px; }
+        
+        .rank-badge { width: 26px; height: 26px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: bold; font-size: 12px; background: var(--border-color); color: var(--text-muted); }
+        .rank-1 { background: var(--gold); color: #000; }
+        .rank-2 { background: #94a3b8; color: #000; }
+        .rank-3 { background: #b45309; color: #fff; }
     </style>
 </head>
 <body>
-    <div class="container">
-        <!-- Profile info -->
-        <div class="card" style="display:flex; justify-content:space-between; align-items:center;">
-            <h3 id="username">O'yinchi</h3>
-            <div style="color: #f59e0b; font-weight: bold;" id="score">0 pt</div>
-        </div>
 
-        <!-- Main Arena -->
-        <div id="quiz-box" class="card">
-            <div style="display:flex; justify-content:space-between; color:#9ca3af; font-size:12px;">
-                <span>Matematika Test</span>
-                <span id="timer">⏳ 15s</span>
-            </div>
-            <h4 id="question-text">Savol yuklanmoqda...</h4>
-            <div id="options-container"></div>
+<div class="container">
+    <div class="quote-box" id="quote">"Bilim — kelajakning kaliti. Bugun harakat qil!"</div>
+    
+    <div class="header">
+        <h3 id="userName">O'yinchi</h3>
+        <div id="totalScore" style="color:var(--gold); font-weight:bold;">0 pt</div>
+    </div>
+
+    <div class="nav">
+        <button class="tab active" onclick="showTab('arena', this)">🎮 Arena</button>
+        <button class="tab" onclick="showTab('games', this)">🎯 O'yinlar</button>
+        <button class="tab" onclick="showTab('leaderboard', this)">🏆 Reyting</button>
+        <button class="tab" onclick="showTab('tasks', this)">🎁 Bonus</button>
+    </div>
+
+    <!-- ARENA -->
+    <div id="arena" class="section active">
+        <div style="font-size: 13px; color: var(--gold); font-weight: bold;">🔥 10 000+ bazadan takrorlanmas 30 talik test:</div>
+        <div class="categories-list">
+            <div class="card" onclick="startTest('Matematika & Mantiq')"><span>🧮 Matematika & Mantiq</span><span style="color:var(--accent-blue);">30 ta ➡️</span></div>
+            <div class="card" onclick="startTest('IT & Dasturlash')"><span>💻 IT & Dasturlash</span><span style="color:var(--accent-blue);">30 ta ➡️</span></div>
+            <div class="card" onclick="startTest('Ingliz tili')"><span>🇬🇧 Ingliz tili</span><span style="color:var(--accent-blue);">30 ta ➡️</span></div>
+            <div class="card" onclick="startTest('Oʻzbekiston tarixi')"><span>🏛️ Oʻzbekiston tarixi</span><span style="color:var(--accent-blue);">30 ta ➡️</span></div>
+            <div class="card" onclick="startTest('Jahon Geografiyasi')"><span>🌍 Jahon Geografiyasi</span><span style="color:var(--accent-blue);">30 ta ➡️</span></div>
+            <div class="card" onclick="startTest('Fizika & Astronomiya')"><span>⚛️ Fizika & Astronomiya</span><span style="color:var(--accent-blue);">30 ta ➡️</span></div>
+            <div class="card" onclick="startTest('Kimyo & Biologiya')"><span>🧬 Kimyo & Biologiya</span><span style="color:var(--accent-blue);">30 ta ➡️</span></div>
+            <div class="card" onclick="startTest('Mantiq va IQ test')"><span>🧠 Mantiq va IQ test</span><span style="color:var(--accent-blue);">30 ta ➡️</span></div>
+            <div class="card" onclick="startTest('Kino va Adabiyot')"><span>🎬 Kino va Adabiyot</span><span style="color:var(--accent-blue);">30 ta ➡️</span></div>
+            <div class="card" onclick="startTest('Sport olami')"><span>⚽ Sport olami</span><span style="color:var(--accent-blue);">30 ta ➡️</span></div>
         </div>
     </div>
 
-    <script>
-        let tg = window.Telegram ? window.Telegram.WebApp : null;
-        if(tg) { tg.ready(); tg.expand(); }
+    <!-- MINI O'YINLAR -->
+    <div id="games" class="section">
+        <div style="font-size: 13px; color: var(--gold); font-weight: bold;">⚡ Qiziqarli mini-o'yinlar (Ball olish uchun ixtiyoriy reklama):</div>
+        <div class="categories-list">
+            <div class="card" onclick="triggerAdAndAction(startSpinGame)">
+                <div style="display:flex; align-items:center; gap:10px;"><span style="font-size:20px;">🎡</span><div><div style="font-weight:bold;">Omad Charxpalagi</div><div style="font-size:11px; color:var(--text-muted);">Kunlik bepul ballar</div></div></div>
+                <span style="color:var(--gold); font-weight:bold;">O'ynash</span>
+            </div>
+            <div class="card" onclick="triggerAdAndAction(startTimeAttack)">
+                <div style="display:flex; align-items:center; gap:10px;"><span style="font-size:20px;">⏱️</span><div><div style="font-weight:bold;">Tezkor Matematika</div><div style="font-size:11px; color:var(--text-muted);">30 soniya shoshiling</div></div></div>
+                <span style="color:var(--accent-blue); font-weight:bold;">Start</span>
+            </div>
+            <div class="card" onclick="triggerAdAndAction(startDuelGame)">
+                <div style="display:flex; align-items:center; gap:10px;"><span style="font-size:20px;">⚔️</span><div><div style="font-weight:bold;">1v1 Duel Arena</div><div style="font-size:11px; color:var(--text-muted);">Raqib bilan bellashuv</div></div></div>
+                <span style="color:var(--accent-purple); font-weight:bold;">Jang</span>
+            </div>
+        </div>
+    </div>
 
-        let userId = tg && tg.initDataUnsafe && tg.initDataUnsafe.user ? tg.initDataUnsafe.user.id : "guest_123";
-        let userName = tg && tg.initDataUnsafe && tg.initDataUnsafe.user ? tg.initDataUnsafe.user.first_name : "O'yinchi";
+    <!-- REYTING -->
+    <div id="leaderboard" class="section">
+        <div style="display:flex; justify-content:space-between; align-items:center;">
+            <div style="font-size: 13px; color: var(--gold); font-weight: bold;">🏆 Kunlik Reyting G'oliblari:</div>
+            <div style="font-size: 10px; color: var(--text-muted);" id="timerCountdown">Yangilanishga: 14s</div>
+        </div>
+        <div class="categories-list" id="leaderboardList"></div>
+    </div>
 
-        document.getElementById('username').innerText = userName;
+    <!-- BONUS -->
+    <div id="tasks" class="section">
+        <div class="card" onclick="triggerAdAndAction(claimBonus)">
+            <div><div style="font-weight: bold;">📅 Kunlik Kirish Bonusi</div><div style="font-size: 12px; color: var(--text-muted);">Har kuni 50 ball oling</div></div>
+            <span style="color: var(--green); font-weight: bold;">+50 pt</span>
+        </div>
+    </div>
 
-        // Vercel backend havolasi o'zi avtomatik bog'lanadi
-        async function fetchUserData() {
-            try {
-                let res = await fetch(`/api/user/${userId}`);
-                let data = await res.json();
-                if(data.success) document.getElementById('score').innerText = data.data.score + " pt";
-            } catch(e) { console.error(e); }
+    <!-- QUIZ SCREEN -->
+    <div id="quiz-screen" class="section">
+        <button class="back-btn" onclick="backToArena()">⬅️ Orqaga</button>
+        <div class="quiz-box">
+            <div class="quiz-header">
+                <span id="quiz-cat-title">Fan</span>
+                <span id="progress-text">1 / 30</span>
+            </div>
+            <div class="timer-bar"><div class="timer-progress" id="timerBar"></div></div>
+            <div class="quiz-question" id="quiz-q">Savol yuklanmoqda...</div>
+            <div id="options-container" style="display: flex; flex-direction: column; gap: 8px;"></div>
+        </div>
+    </div>
+
+    <!-- TIME ATTACK -->
+    <div id="time-attack-screen" class="section">
+        <button class="back-btn" onclick="backToArena()">⬅️ Chiqish</button>
+        <div class="quiz-box" style="text-align: center;">
+            <h3 style="color: var(--gold);">⏱️ Time Attack</h3>
+            <div id="taTimer" style="font-size: 28px; font-weight: bold; color: var(--accent-blue);">30s</div>
+            <div id="taQuestion" style="font-size: 18px; font-weight: bold; margin: 10px 0;">5 + 3 = ?</div>
+            <div id="taOptions" style="display: flex; flex-direction: column; gap: 8px;"></div>
+            <div style="font-size: 13px; color: var(--text-muted);">To'plangan ball: <span id="taScore" style="color:var(--gold); font-weight:bold;">0</span></div>
+        </div>
+    </div>
+
+    <!-- 1V1 DUEL -->
+    <div id="duel-screen" class="section">
+        <button class="back-btn" onclick="backToArena()">⬅️ Chiqish</button>
+        <div class="quiz-box" style="text-align: center;">
+            <h3 style="color: var(--accent-purple);">⚔️ 1v1 Duel Arena</h3>
+            <p id="duelStatus" style="font-size: 13px; color: var(--text-muted);">Raqib qidirilmoqda...</p>
+            <div id="duelArea" style="display:none; flex-direction:column; gap:10px;">
+                <div id="duelQ" style="font-size: 16px; font-weight: bold;">Savol...</div>
+                <div id="duelOpts" style="display: flex; flex-direction: column; gap: 8px;"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- SPIN -->
+    <div id="spin-screen" class="section">
+        <button class="back-btn" onclick="backToArena()">⬅️ Orqaga</button>
+        <div class="quiz-box" style="text-align: center; gap: 15px; padding: 25px;">
+            <h3 style="color: var(--gold);">🎡 Omad Charxpalagi</h3>
+            <p style="font-size: 13px; color: var(--text-muted);">Baxtingizni sinab ko'ring!</p>
+            <div id="spinResultText" style="font-size: 24px; font-weight: bold; color: var(--green);">🎁 Sovrinni aylantiring!</div>
+            <button class="action-btn" onclick="executeSpin()">Charxni Aylantirish</button>
+        </div>
+    </div>
+
+    <!-- SERTIFIKAT -->
+    <div id="cert-screen" class="section">
+        <button class="back-btn" onclick="backToArena()">⬅️ Asosiy menu</button>
+        <div class="cert-card">
+            <div style="font-size: 10px; color: var(--accent-blue); font-weight: bold; letter-spacing: 1px;">SMART ARENA WEB ILOVASI RASMIY SERTIFIKATI</div>
+            <h2 style="color: var(--gold); font-size: 19px; margin-top: 4px;">🏆 MAQTOV YORG'I</h2>
+            <p style="font-size: 12px; color: var(--text-muted);">Ushbu sertifikat quyidagi bilimdon ishtirokchiga taqdim etiladi:</p>
+            <div id="certUserName" style="font-size: 21px; font-weight: bold; border-bottom: 1px dashed var(--gold); padding-bottom: 6px; color: #fff;">O'yinchi</div>
+            <p id="certPraiseText" style="font-size: 13px; color: var(--green); font-style: italic; line-height: 1.4;">"Matematika fanidan yuqori natija ko'rsatib, o'zining yuksak salohiyatini namoyon etdi!"</p>
+            <div id="certScore" style="font-size: 14px; font-weight: bold; color: var(--gold);">Natija: 300 pt</div>
+            <button class="action-btn" onclick="alert('Sertifikat muvaffaqiyatli saqlandi! 🎓')">Sertifikatni Saqlash</button>
+        </div>
+    </div>
+</div>
+
+<script>
+    const tg = window.Telegram?.WebApp;
+    if (tg) {
+        tg.ready();
+        tg.expand();
+    }
+
+    let sessionCount = parseInt(localStorage.getItem('smart_arena_sessions') || '0');
+    sessionCount++;
+    localStorage.setItem('smart_arena_sessions', sessionCount);
+
+    function checkMandatoryAd() {
+        if (sessionCount === 2) {
+            if (typeof show_11523147 === 'function') {
+                show_11523147();
+            }
         }
+    }
+    window.addEventListener('DOMContentLoaded', checkMandatoryAd);
 
-        async function addPoints(pts) {
-            try {
-                let res = await fetch(`/api/score`, {
-                    method: 'POST',
-                    headers: {'Content-Type': 'application/json'},
-                    body: JSON.stringify({ userId: userId.toString(), points: pts })
-                });
-                let data = await res.json();
-                if(data.success) document.getElementById('score').innerText = data.score + " pt";
-            } catch(e) { console.error(e); }
+    function triggerAdAndAction(actionCallback) {
+        if (typeof show_11523147 === 'function') {
+            show_11523147().then(() => {
+                actionCallback();
+            }).catch(() => {
+                actionCallback(); 
+            });
+        } else {
+            actionCallback();
         }
+    }
 
-        // Oddiy savol chiqarish
-        function loadQuiz() {
-            let n1 = Math.floor(Math.random() * 50) + 1;
-            let n2 = Math.floor(Math.random() * 50) + 1;
-            let correct = n1 + n2;
-            
-            document.getElementById('question-text').innerText = `${n1} + ${n2} = ?`;
-            
-            let opts = [correct, correct + 2, correct - 1, correct + 5].sort(() => Math.random() - 0.5);
-            let container = document.getElementById('options-container');
-            container.innerHTML = '';
+    let userName = "O'yinchi";
+    let userId = "user_" + Math.floor(Math.random() * 100000);
+    if (tg?.initDataUnsafe?.user?.first_name) {
+        userName = tg.initDataUnsafe.user.first_name;
+        if(tg.initDataUnsafe.user.id) userId = tg.initDataUnsafe.user.id.toString();
+    }
+    document.getElementById('userName').innerText = userName;
+    document.getElementById('certUserName').innerText = userName;
 
-            opts.forEach(opt => {
-                let btn = document.createElement('button');
-                btn.className = 'btn btn-opt';
-                btn.innerText = opt;
-                btn.onclick = () => {
-                    if(opt === correct) addPoints(10);
-                    loadQuiz();
-                };
-                container.appendChild(btn);
+    let userScore = parseInt(localStorage.getItem('smart_arena_score') || '0');
+    document.getElementById('totalScore').innerText = userScore + ' pt';
+
+    function addScore(points) {
+        userScore += points;
+        localStorage.setItem('smart_arena_score', userScore);
+        document.getElementById('totalScore').innerText = userScore + ' pt';
+        
+        // Node.js Express Backend bilan avtomatik bog'lanish
+        fetch('/api/score', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ userId, name: userName, points })
+        }).catch(e => console.error(e));
+    }
+
+    const quotes = [
+        "Bilim — kelajakning kaliti. Bugun harakat qil!",
+        "Muvaffaqiyat tasodif emas, u tinimsiz mehnat natijasi.",
+        "Har bir kichik qadam seni buyuk cho'qqiga yaqinlashtiradi.",
+        "To'xtama! Hali zabt etilmagan cho'qqilar juda ko'p."
+    ];
+    document.getElementById('quote').innerText = quotes[Math.floor(Math.random() * quotes.length)];
+
+    let currentQ = 1;
+    const totalQ = 30;
+    let timer;
+    let timeLeft = 15;
+    let currentCategory = "";
+
+    function showTab(id, btn) {
+        clearInterval(timer);
+        document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+        document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+        document.getElementById(id).classList.add('active');
+        if(btn) btn.classList.add('active');
+        if(id === 'leaderboard') renderLeaderboard();
+    }
+
+    function backToArena() {
+        clearInterval(timer);
+        showTab('arena', document.querySelector('.tab'));
+    }
+
+    function getUniqueQuestionsForCategory(category) {
+        let list = [];
+        let usedIndices = new Set();
+        while(list.length < 30) {
+            let randId = Math.floor(Math.random() * 10000) + 1;
+            if(usedIndices.has(randId)) continue;
+            usedIndices.add(randId);
+
+            let n1 = (randId % 90) + 5;
+            let n2 = ((randId * 3) % 85) + 3;
+            let ans = n1 + n2;
+            let qText = `${list.length + 1}-savol (#${randId} - ${category}): ${n1} va ${n2} sonlarining yig'indisi nechiga teng?`;
+
+            if(category === 'IT & Dasturlash') {
+                ans = n1 * n2;
+                qText = `${list.length + 1}-savol (#${randId}): ${n1} va ${n2} qiymatlarining ko'paytmasi qaysi javobda to'g'ri ko'rsatilgan?`;
+            } else if(category === 'Ingliz tili') {
+                ans = n1 + n2;
+                qText = `${list.length + 1}-savol (#${randId}): Tarjima va grammatik qoida bo'yicha ${n1} va ${n2} yig'indisi:`;
+            } else if(category === 'Oʻzbekiston tarixi') {
+                ans = 1300 + n1;
+                qText = `${list.length + 1}-savol (#${randId}): ${1300 + n1}-yilda sodir bo'lgan muhim tarixiy davr ko'rsatkichi:`;
+            }
+
+            list.push({
+                question: qText,
+                options: [ans.toString(), (ans + 4).toString(), (ans - 3).toString(), (ans + 7).toString()],
+                correct: 0
             });
         }
+        return list;
+    }
 
-        fetchUserData();
-        loadQuiz();
-    </script>
-</body>
-</html>
+    let activeQuestions = [];
+    function startTest(category) {
+        triggerAdAndAction(() => {
+            if (tg?.HapticFeedback) tg.HapticFeedback.impactOccurred('medium');
+            currentCategory = category;
+            currentQ = 1;
+            activeQuestions = getUniqueQuestionsForCategory(category);
+            
+            document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+            document.getElementById('quiz-screen').classList.add('active');
+            document.getElementById('quiz-cat-title').innerText = category;
+            loadQuestion();
+        });
+    }
+
+    function loadQuestion() {
+        if (currentQ > totalQ) {
+            clearInterval(timer);
+            if (tg?.HapticFeedback) tg.HapticFeedback.notificationOccurred('success');
+            showCertificate();
+            return;
+        }
+
+        document.getElementById('progress-text').innerText = `${currentQ} / ${totalQ}`;
+        let qData = activeQuestions[currentQ - 1];
+        document.getElementById('quiz-q').innerText = qData.question;
+
+        const container = document.getElementById('options-container');
+        container.innerHTML = '';
+
+        let opts = qData.options.map((opt, idx) => ({ text: opt, isCorrect: idx === qData.correct }));
+        opts.sort(() => Math.random() - 0.5);
+
+        opts.forEach(opt => {
+            let btn = document.createElement('button');
+            btn.className = 'option-btn';
+            btn.innerText = opt.text;
+            btn.onclick = () => checkAnswer(btn, opt.isCorrect);
+            container.appendChild(btn);
+        });
+
+        resetTimer();
+    }
+
+    function checkAnswer(btn, isCorrect) {
+        clearInterval(timer);
+        if(is
 
