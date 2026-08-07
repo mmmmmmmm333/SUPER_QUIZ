@@ -5,6 +5,7 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
+// Xotirada vaqtinchalik reyting saqlash (Production uchun DB ulashingiz mumkin)
 let usersDatabase = {};
 
 // Score yozish API
@@ -44,3 +45,4 @@ app.get('/api/leaderboard', (req, res) => {
 });
 
 module.exports = app;
+
