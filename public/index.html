@@ -53,7 +53,6 @@
       font-weight: bold;
     }
     
-    /* Sertifikat */
     .certificate {
       background: #f8fafc;
       color: #0f172a;
@@ -83,22 +82,19 @@
   <h2>🎮 SMART AREA</h2>
   <div id="scoreDisplay">Jami ball: 0</div>
 
-  <!-- Savol kartochkasi -->
   <div class="card" id="quizCard">
-    <h3 id="questionText">Savol o'zbek tiliga tarjima qilinmoqda...</h3>
+    <h3 id="questionText">Savol yuklanmoqda...</h3>
     <div id="optionsBox"></div>
   </div>
 
   <button class="btn" style="background: #10b981;" onclick="toggleLeaderboard()">🏆 Top 10 Reyting</button>
   <button class="btn" style="background: #f59e0b;" onclick="checkCertificate()">📜 Kun chempioni sertifikati</button>
 
-  <!-- Reyting kartochkasi -->
   <div id="leaderCard" class="card" style="display: none;">
     <h3>Peshqadamlar</h3>
     <div id="leaderList">Yuklanmoqda...</div>
   </div>
 
-  <!-- Sertifikat oynasi -->
   <div id="certCard" class="certificate">
     <div class="cert-title">🎖 KUN CHEMPIONI SERTIFIKATI 🎖</div>
     <p>Ushbu sertifikat SMART AREA o'yinida kunning eng yuqori natijasini ko'rsatgani uchun:</p>
@@ -117,23 +113,39 @@
     const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imhxam1jZmF5d2Zqd2pxYW15YWlrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODYyMDE3MDEsImV4cCI6MjEwMTc3NzcwMX0.WHzdySBpsjONCB1t3aEsIEh9CGr0uybye2qzg1Ovghw";
     const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
+    // RapidAPI Google API ma'lumotlari
+    const RAPIDAPI_KEY = "02813b13edmshe6df87c9765870ap18c536jsn15e989b9415f";
+    const RAPIDAPI_HOST = "google-api31.p.rapidapi.com";
+
     let currentQuestion = null;
     let totalScore = 0;
 
-    // Matnni O'zbek tiliga tarjima qilish funksiyasi
-    async function translateToUzbek(text) {
+    // RapidAPI orqali tarjima qilish
+    async function translateText(text) {
       try {
-        const res = await fetch(`https://api.mymemory.translated.net/get?q=${encodeURIComponent(text)}&langpair=en|uz`);
-        const data = await res.json();
-        return data.responseData.translatedText || text;
+        const response = await fetch("https://google-api31.p.rapidapi.com/translate", {
+          method: "POST",
+          headers: {
+            "content-type": "application/json",
+            "x-rapidapi-key": RAPIDAPI_KEY,
+            "x-rapidapi-host": RAPIDAPI_HOST
+          },
+          body: JSON.stringify({
+            text: text,
+            to: "uz",
+            from: "en"
+          })
+        });
+
+        const data = await response.json();
+        return data?.translated_text || data?.result || text;
       } catch (e) {
-        return text; // Tarjima ishlamay qolsa asl matnni qaytaradi
+        return text;
       }
     }
 
-    // OpenTDB API orqali savolni olib, o'zbekchaga tarjima qilish
     async function fetchNewQuestion() {
-      document.getElementById("questionText").innerText = "Yangi savol tarjima qilinmoqda...";
+      document.getElementById("questionText").innerText = "Sifatli o'zbekcha savol yuklanmoqda...";
       document.getElementById("optionsBox").innerHTML = "";
 
       try {
@@ -142,18 +154,17 @@
         
         if (data.results && data.results.length > 0) {
           const qData = data.results[0];
-          
           const parser = new DOMParser();
-          const rawQuestion = parser.parseFromString(qData.question, 'text/html').body.textContent;
           
+          const rawQuestion = parser.parseFromString(qData.question, 'text/html').body.textContent;
           let rawOptions = [...qData.incorrect_answers];
           const correctIndex = Math.floor(Math.random() * 4);
           rawOptions.splice(correctIndex, 0, qData.correct_answer);
 
-          // Savol va barcha variantlarni parallel tarjima qilish
-          const translatedQuestion = await translateToUzbek(rawQuestion);
+          // Savol va variantlarni tarjima qilish
+          const translatedQuestion = await translateText(rawQuestion);
           const translatedOptions = await Promise.all(
-            rawOptions.map(opt => translateToUzbek(parser.parseFromString(opt, 'text/html').body.textContent))
+            rawOptions.map(opt => translateText(parser.parseFromString(opt, 'text/html').body.textContent))
           );
 
           currentQuestion = {
@@ -165,7 +176,7 @@
           renderQuestion();
         }
       } catch (e) {
-        document.getElementById("questionText").innerText = "Savol yuklashda xatolik! Qaytadan urinib ko'ring.";
+        document.getElementById("questionText").innerText = "Xatolik yuz berdi! Qayta urining.";
       }
     }
 
@@ -205,19 +216,12 @@
         if (data && data.length > 0) {
           await supabaseClient
             .from('leaderboard')
-            .update({ 
-              score: Number(data[0].score) + Number(points), 
-              name: tgUser.first_name 
-            })
+            .update({ score: Number(data[0].score) + Number(points), name: tgUser.first_name })
             .eq('user_id', tgUser.id.toString());
         } else {
           await supabaseClient
             .from('leaderboard')
-            .insert([{ 
-              user_id: tgUser.id.toString(), 
-              name: tgUser.first_name, 
-              score: Number(points) 
-            }]);
+            .insert([{ user_id: tgUser.id.toString(), name: tgUser.first_name, score: Number(points) }]);
         }
       } catch (e) {
         console.error("Xato:", e);
@@ -270,7 +274,7 @@
       document.getElementById("leaderCard").style.display = "none";
 
       try {
-        const { data, error } = await supabaseClient
+        const { data } = await supabaseClient
           .from('leaderboard')
           .select('*')
           .order('score', { ascending: false })
@@ -289,7 +293,6 @@
       }
     }
 
-    // Boshlash
     fetchNewQuestion();
   </script>
 
