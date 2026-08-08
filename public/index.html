@@ -138,14 +138,15 @@
         });
 
         const data = await response.json();
-        return data?.translated_text || data?.result || text;
+        return data?.translated_text || data?.result || data?.translation || data?.text || text;
       } catch (e) {
+        console.error("Tarjima xatoligi:", e);
         return text;
       }
     }
 
     async function fetchNewQuestion() {
-      document.getElementById("questionText").innerText = "Sifatli o'zbekcha savol yuklanmoqda...";
+      document.getElementById("questionText").innerText = "O'zbekchaga tarjima qilinmoqda...";
       document.getElementById("optionsBox").innerHTML = "";
 
       try {
@@ -298,3 +299,4 @@
 
 </body>
 </html>
+
