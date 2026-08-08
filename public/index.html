@@ -30,36 +30,67 @@
         }
         .header { 
             background: #151c2c; 
-            padding: 14px 18px; 
+            padding: 12px 16px; 
             border-radius: 14px; 
             border: 1px solid #1e293b; 
             display: flex; 
             justify-content: space-between; 
             align-items: center; 
-            font-weight: bold; 
+        }
+        .user-info {
+            display: flex;
+            flex-direction: column;
+            gap: 2px;
+        }
+        .user-name {
+            font-weight: bold;
+            font-size: 15px;
+        }
+        .hearts {
+            color: #ef4444;
+            font-size: 14px;
+            letter-spacing: 2px;
         }
         .score { 
             color: #f59e0b; 
-            font-size: 17px; 
-        }
-        .bonus-card {
-            background: linear-gradient(135deg, #1e1b4b, #0f172a);
-            border: 1px solid #10b981;
-            padding: 12px 16px;
-            border-radius: 12px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-        .bonus-btn {
-            background: #10b981;
-            color: white;
-            border: none;
-            padding: 8px 12px;
-            border-radius: 8px;
             font-weight: bold;
+            font-size: 16px; 
+        }
+        
+        /* TAB TIZIMI */
+        .tabs {
+            display: flex;
+            background: #151c2c;
+            border-radius: 12px;
+            padding: 4px;
+            border: 1px solid #1e293b;
+        }
+        .tab-btn {
+            flex: 1;
+            padding: 10px;
+            background: transparent;
+            border: none;
+            color: #9ca3af;
+            font-weight: bold;
+            font-size: 13px;
+            border-radius: 8px;
             cursor: pointer;
         }
+        .tab-btn.active {
+            background: #3b82f6;
+            color: white;
+        }
+
+        .view-section {
+            display: none;
+            flex-direction: column;
+            gap: 12px;
+        }
+        .view-section.active {
+            display: flex;
+        }
+
+        /* CARD VA SAVOLLAR */
         .card { 
             background: #151c2c; 
             padding: 18px; 
@@ -73,7 +104,6 @@
             font-size: 12px;
             color: #3b82f6;
             font-weight: bold;
-            text-transform: uppercase;
         }
         .question { 
             font-size: 16px; 
@@ -91,86 +121,94 @@
             font-size: 14px; 
             cursor: pointer; 
             text-align: left;
-            transition: 0.1s;
         }
         .btn:active { 
             background: #3b82f6; 
         }
-        .info-box {
-            font-size: 12px;
-            color: #9ca3af;
-            text-align: center;
-            margin-top: 5px;
+
+        /* REYTING JADVALI */
+        .leaderboard-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 12px 14px;
+            background: rgba(255, 255, 255, 0.03);
+            border-radius: 10px;
+            border: 1px solid #1e293b;
+        }
+        .rank {
+            font-weight: bold;
+            width: 30px;
+            color: #f59e0b;
+        }
+        .leader-name {
+            flex: 1;
+            font-size: 14px;
+        }
+        .leader-score {
+            font-weight: bold;
+            color: #10b981;
+            font-size: 14px;
         }
     </style>
 </head>
 <body>
 
 <div class="app">
-    <!-- HEADER: Fodalanuvchi va Ball -->
+    <!-- HEADER -->
     <div class="header">
-        <span id="userName">O'yinchi</span>
+        <div class="user-info">
+            <span class="user-name" id="userName">O'yinchi</span>
+            <span class="hearts" id="heartsDisplay">❤️❤️❤️❤️❤️</span>
+        </div>
         <span class="score" id="userScore">0 pt</span>
     </div>
 
-    <!-- KUNLIK BONUS -->
-    <div class="bonus-card">
-        <div>
-            <div style="font-weight: bold; font-size: 13px;">🎁 Kunlik Bonus</div>
-            <div style="font-size: 11px; color: #9ca3af;">Har kuni 50 ball oling</div>
+    <!-- TABS -->
+    <div class="tabs">
+        <button class="tab-btn active" onclick="switchTab('game')">🎮 O'yin</button>
+        <button class="tab-btn" onclick="switchTab('leaderboard')">🏆 Top 10</button>
+    </div>
+
+    <!-- GAME SECTION -->
+    <div id="gameSection" class="view-section active">
+        <div class="card" id="quizCard">
+            <div class="q-counter" id="qCat">SMART ARENA TEST</div>
+            <div class="question" id="qText">Savol yuklanmoqda...</div>
+            <div id="answers" style="display: flex; flex-direction: column; gap: 8px;"></div>
         </div>
-        <button type="button" class="bonus-btn" id="bonusBtn" onclick="claimDailyBonus()">Olish</button>
+        
+        <!-- ENERGIYA TUGAGANDA CHIQUVCHI BLOK -->
+        <div class="card" id="gameOverCard" style="display: none; text-align: center;">
+            <h3 style="color: #ef4444; font-size: 20px;">💔 Yurakchalar tugadi!</h3>
+            <p style="font-size: 13px; color: #9ca3af; margin: 10px 0;">Yangi imkoniyat olish uchun biroz kutishingiz yoki qayta boshlashingiz mumkin.</p>
+            <button class="btn" style="text-align: center; background: #10b981;" onclick="resetHearts()">🔄 Yurakchalarni tiklash</button>
+        </div>
     </div>
 
-    <!-- SAVOLLAR KARTASI -->
-    <div class="card">
-        <div class="q-counter" id="qCat">SMART ARENA TEST</div>
-        <div class="question" id="qText">Savol yuklanmoqda...</div>
-        <div id="answers" style="display: flex; flex-direction: column; gap: 8px;"></div>
+    <!-- LEADERBOARD SECTION -->
+    <div id="leaderboardSection" class="view-section">
+        <div class="card">
+            <h3 style="font-size: 16px; margin-bottom: 5px;">🏆 Eng Kuchli O'yinchilar</h3>
+            <div id="leaderboardList" style="display: flex; flex-direction: column; gap: 8px;">
+                <!-- JavaScript orqali to'ldiriladi -->
+            </div>
+        </div>
     </div>
-
-    <div class="info-box">Har bir to'g'ri javob uchun <b>+10 pt</b> beriladi</div>
 </div>
 
 <script>
-    // 40+ TA TASODIFIY SAVOLLAR BAZASI
     const rawQuestions = [
-        // MATEMATIKA & MANTIQ
         { q: "15 x 4 nechiga teng?", opts: ["60", "50", "65", "55"], correct: 0, cat: "🧮 Matematika" },
-        { q: "Kvadratning nechtasi teng tomoni bor?", opts: ["4 ta", "3 ta", "6 ta", "2 ta"], correct: 0, cat: "🧮 Matematika" },
         { q: "25 ning kvadrat ildizi nechaga teng?", opts: ["5", "6", "4", "10"], correct: 0, cat: "🧮 Matematika" },
-        { q: "99 + 101 nechiga teng?", opts: ["200", "190", "201", "210"], correct: 0, cat: "🧮 Matematika" },
-        { q: "100 ning 20% qismi necha bo'ladi?", opts: ["20", "10", "25", "50"], correct: 0, cat: "🧮 Matematika" },
-        { q: "Eng kichik juft tub son qaysi?", opts: ["2", "0", "1", "4"], correct: 0, cat: "🧮 Mantiq" },
-        { q: "30 ni 0.5 ga bo'lsangiz necha chiqadi?", opts: ["60", "15", "30", "45"], correct: 0, cat: "🧮 Mantiq" },
-
-        // DASTURLASH & IT
         { q: "Pythonda konsolga matn chiqarish kodi qaysi?", opts: ["print()", "echo()", "console.log()", "System.out()"], correct: 0, cat: "💻 Dasturlash" },
         { q: "Veb-sahifa tuzilishini (skeletini) yarativchi til?", opts: ["HTML", "CSS", "Python", "SQL"], correct: 0, cat: "💻 IT" },
         { q: "1 Gigabayt (GB) necha Megabayt (MB)?", opts: ["1024 MB", "1000 MB", "512 MB", "2048 MB"], correct: 0, cat: "💻 IT" },
-        { q: "Telegram ilovasi asoschisi kim?", opts: ["Pavel Durov", "Mark Zuckerberg", "Bill Gates", "Elon Musk"], correct: 0, cat: "💻 IT" },
-        { q: "CSS nima uchun ishlatiladi?", opts: ["Dizayn va stil berish", "Ma'lumotlar bazasi", "Server kodi", "Algoritm"], correct: 0, cat: "💻 Dasturlash" },
-        { q: "Ma'lumotlar bazasi bilan ishlash tili qaysi?", opts: ["SQL", "HTML", "C++", "Java"], correct: 0, cat: "💻 IT" },
-
-        // GEOGRAFIYA & UMUMIY BILIM
         { q: "O'zbekiston Respublikasi poytaxti qaysi shahar?", opts: ["Toshkent", "Samarqand", "Buxoro", "Xiva"], correct: 0, cat: "🌍 Geografiya" },
         { q: "Dunyodagi eng katta okean qaysi?", opts: ["Tinch okeani", "Atlantika", "Hind okeani", "Shimoliy Muz"], correct: 0, cat: "🌍 Geografiya" },
-        { q: "O'zbekiston qachon mustaqillikka erishgan?", opts: ["1991-yil", "1990-yil", "1992-yil", "1989-yil"], correct: 0, cat: "🏛️ Tarix" },
-        { q: "Amir Temur nechanchi yilda tug'ilgan?", opts: ["1336-yil", "1340-yil", "1300-yil", "1405-yil"], correct: 0, cat: "🏛️ Tarix" },
-        { q: "Quyosh tizimidagi eng katta planeta qaysi?", opts: ["Yupiter", "Mars", "Saturn", "Yer"], correct: 0, cat: "🚀 Koinot" },
-        { q: "Inson tanasidagi eng katta a'zo qaysi?", opts: ["Teri", "Jigar", "Yurak", "Miya"], correct: 0, cat: "🧬 Biologiya" },
-        { q: "Suvning kimyoviy formulasi qanday?", opts: ["H2O", "CO2", "NaCl", "O2"], correct: 0, cat: "🧪 Kimyo" },
-
-        // INGLIZ TILI & QIZIQARLI
-        { q: "Ingliz tilida 'Apple' so'zining ma'nosi nima?", opts: ["Olma", "Nok", "Uzum", "Banan"], correct: 0, cat: "🇬🇧 Ingliz tili" },
-        { q: "Ingliz tilida 'Book' nimani anglatadi?", opts: ["Kitob", "Daftar", "Rasm", "Qalam"], correct: 0, cat: "🇬🇧 Ingliz tili" },
-        { q: "Futbol o'yinida bitta jamoada nechta o'yinchi bo'ladi?", opts: ["11 ta", "10 ta", "12 ta", "9 ta"], correct: 0, cat: "⚽ Sport" },
-        { q: "Shaxmat taxtasida nechta katak bor?", opts: ["64 ta", "100 ta", "50 ta", "81 ta"], correct: 0, cat: "♟️ Mantiq" },
-        { q: "Bir yilda necha fasl bor?", opts: ["4 ta", "12 ta", "7 ta", "2 ta"], correct: 0, cat: "🌍 Umumiy" },
-        { q: "Dunyo xaritasida nechta qit'a bor?", opts: ["6 ta", "5 ta", "7 ta", "8 ta"], correct: 0, cat: "🌍 Geografiya" }
+        { q: "Amir Temur nechanchi yilda tug'ilgan?", opts: ["1336-yil", "1340-yil", "1300-yil", "1405-yil"], correct: 0, cat: "🏛️ Tarix" }
     ];
 
-    // SAVOLLARNI TASODIFIY (SHUFFLE) QILISH FUNKSIYASI
     function shuffleArray(array) {
         let shuffled = [...array];
         for (let i = shuffled.length - 1; i > 0; i--) {
@@ -182,9 +220,10 @@
 
     let questions = shuffleArray(rawQuestions);
     let currentIndex = 0;
-    let score = parseInt(localStorage.getItem('smart_arena_score') || '0');
+    let score = parseInt(localStorage.getItem('sa_score') || '0');
+    let hearts = parseInt(localStorage.getItem('sa_hearts') || '5');
 
-    // TELEGRAM WE BAPP SOZLAMASI
+    // TELEGRAM INIT
     try {
         if (window.Telegram && window.Telegram.WebApp) {
             window.Telegram.WebApp.ready();
@@ -196,16 +235,25 @@
         }
     } catch(e) {}
 
-    // SCORE EKRANGA CHIQARISH
-    document.getElementById('userScore').innerText = score + ' pt';
+    function updateUI() {
+        document.getElementById('userScore').innerText = score + ' pt';
+        document.getElementById('heartsDisplay').innerText = '❤️'.repeat(hearts) + '🖤'.repeat(5 - hearts);
+        
+        if (hearts <= 0) {
+            document.getElementById('quizCard').style.display = 'none';
+            document.getElementById('gameOverCard').style.display = 'flex';
+        } else {
+            document.getElementById('quizCard').style.display = 'flex';
+            document.getElementById('gameOverCard').style.display = 'none';
+        }
+    }
 
-    // SAVOLNI YUKLASH
     function loadQuestion() {
+        if (hearts <= 0) return;
         let q = questions[currentIndex];
-        document.getElementById('qCat').innerText = q.cat + ` (${currentIndex + 1}/${questions.length})`;
+        document.getElementById('qCat').innerText = q.cat;
         document.getElementById('qText').innerText = q.q;
 
-        // Variantlarni ham aralashtiramiz
         let optionsWithIndex = q.opts.map((opt, idx) => ({ text: opt, isCorrect: idx === q.correct }));
         optionsWithIndex = shuffleArray(optionsWithIndex);
 
@@ -216,46 +264,76 @@
         document.getElementById('answers').innerHTML = html;
     }
 
-    // JAVOBNI TEKSHIRISH
     function checkAnswer(isCorrect) {
         if (isCorrect) {
             score += 10;
-            localStorage.setItem('smart_arena_score', score);
-            document.getElementById('userScore').innerText = score + ' pt';
+            localStorage.setItem('sa_score', score);
             alert("To'g'ri! 🎉 +10 pt");
         } else {
-            alert("Noto'g'ri! ❌");
+            hearts--;
+            localStorage.setItem('sa_hearts', hearts);
+            alert("Noto'g'ri! ❌ 1 ta yurakcha yo'qoldi!");
         }
 
-        currentIndex++;
-        // Agar barcha savollar tugasa, yana qayta aralashtirib boshlaydi
-        if (currentIndex >= questions.length) {
-            questions = shuffleArray(rawQuestions);
-            currentIndex = 0;
-            alert("🔥 Barcha savollar topshirildi! Savollar qayta aralashtirildi.");
+        updateUI();
+
+        if (hearts > 0) {
+            currentIndex = (currentIndex + 1) % questions.length;
+            loadQuestion();
         }
+    }
+
+    function resetHearts() {
+        hearts = 5;
+        localStorage.setItem('sa_hearts', '5');
+        updateUI();
         loadQuestion();
     }
 
-    // KUNLIK BONUS
-    function claimDailyBonus() {
-        let lastBonus = localStorage.getItem('last_bonus_date');
-        let today = new Date().toDateString();
+    function switchTab(tabName) {
+        document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+        document.querySelectorAll('.view-section').forEach(sec => sec.classList.remove('active'));
 
-        if (lastBonus === today) {
-            alert("Siz bugungi bonusni olib bo'lgansiz! Ertaga qayta kiring. ⏳");
+        if (tabName === 'game') {
+            document.querySelectorAll('.tab-btn')[0].classList.add('active');
+            document.getElementById('gameSection').classList.add('active');
         } else {
-            score += 50;
-            localStorage.setItem('smart_arena_score', score);
-            localStorage.setItem('last_bonus_date', today);
-            document.getElementById('userScore').innerText = score + ' pt';
-            alert("🎁 Tabriklaymiz! +50 pt bonus berildi!");
-            document.getElementById('bonusBtn').innerText = "Olindi";
-            document.getElementById('bonusBtn').style.opacity = "0.5";
+            document.querySelectorAll('.tab-btn')[1].classList.add('active');
+            document.getElementById('leaderboardSection').classList.add('active');
+            renderLeaderboard();
         }
     }
 
-    // ILK BOR YUKLASH
+    function renderLeaderboard() {
+        // Namuna sifatida static va joriy foydalanuvchi reytingi
+        let currentUserName = document.getElementById('userName').innerText;
+        let mockData = [
+            { name: "Jasur_IT", score: 450 },
+            { name: "Sardor_Dev", score: 380 },
+            { name: "Madina_99", score: 310 },
+            { name: currentUserName, score: score },
+            { name: "Ali_Valiyev", score: 180 }
+        ];
+
+        // Ball bo'yicha saralash
+        mockData.sort((a, b) => b.score - a.score);
+
+        let html = '';
+        mockData.forEach((item, index) => {
+            let isMe = item.name === currentUserName;
+            html += `
+                <div class="leaderboard-item" style="${isMe ? 'border-color: #3b82f6; background: rgba(59, 130, 246, 0.1);' : ''}">
+                    <span class="rank">#${index + 1}</span>
+                    <span class="leader-name">${item.name} ${isMe ? '(Siz)' : ''}</span>
+                    <span class="leader-score">${item.score} pt</span>
+                </div>
+            `;
+        });
+        document.getElementById('leaderboardList').innerHTML = html;
+    }
+
+    // ISHGA TUSHIRISH
+    updateUI();
     loadQuestion();
 </script>
 
