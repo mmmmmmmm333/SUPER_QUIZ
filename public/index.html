@@ -5,10 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>SMART AREA</title>
   
-  <!-- Telegram Web App SDK -->
   <script src="https://telegram.org/js/telegram-web-app.js"></script>
-
-  <!-- Supabase JS Library -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
   <style>
@@ -22,20 +19,27 @@
     }
     .card {
       background: #1e293b;
-      padding: 15px;
+      padding: 20px;
       border-radius: 12px;
       margin-top: 15px;
-      display: none;
     }
     .btn {
       background: #3b82f6;
       color: white;
       border: none;
-      padding: 10px 20px;
+      padding: 12px 20px;
       font-size: 16px;
       border-radius: 8px;
       cursor: pointer;
-      margin: 5px;
+      margin: 8px 0;
+      width: 100%;
+      display: block;
+    }
+    .btn-option {
+      background: #334155;
+    }
+    .btn-option:active {
+      background: #1d4ed8;
     }
     .leader-item {
       display: flex;
@@ -43,22 +47,34 @@
       padding: 8px 0;
       border-bottom: 1px solid #334155;
     }
+    #scoreDisplay {
+      font-size: 18px;
+      color: #38bdf8;
+      font-weight: bold;
+    }
   </style>
 </head>
 <body>
 
   <h2>🎮 SMART AREA</h2>
-  <p>Savol-javob o'yini</p>
+  <div id="scoreDisplay">Jami ball: 0</div>
 
-  <button class="btn" onclick="toggleLeaderboard()">🏆 Top 10 Reyting</button>
+  <!-- Savol kartochkasi -->
+  <div class="card" id="quizCard">
+    <h3 id="questionText">Savol yuklanmoqda...</h3>
+    <div id="optionsBox"></div>
+  </div>
 
-  <div id="leaderCard" class="card">
+  <button class="btn" style="background: #10b981;" onclick="toggleLeaderboard()">🏆 Top 10 Reyting</button>
+
+  <!-- Reyting kartochkasi -->
+  <div id="leaderCard" class="card" style="display: none;">
     <h3>Peshqadamlar</h3>
     <div id="leaderList">Yuklanmoqda...</div>
   </div>
 
   <script>
-    // Telegram Web App tayyorgarligi
+    // Telegram WebApp sozlanishi
     if (window.Telegram && window.Telegram.WebApp) {
       window.Telegram.WebApp.ready();
       window.Telegram.WebApp.expand();
@@ -67,10 +83,51 @@
     // Supabase sozlamalari
     const SUPABASE_URL = "https://hqjmcfaywfjwjqamyaik.supabase.co";
     const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imhxam1jZmF5d2Zqd2pxYW15YWlrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODYyMDE3MDEsImV4cCI6MjEwMTc3NzcwMX0.WHzdySBpsjONCB1t3aEsIEh9CGr0uybye2qzg1Ovghw";
-    
     const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-    // Ballni saqlash
+    // Savollar ro'yxati (aylanib takrorlanaveradi)
+    const quizData = [
+      { q: "O'zbekiston poytaxti qaysi shahar?", options: ["Toshkent", "Samarqand", "Buxoro", "Xiva"], correct: 0 },
+      { q: "2 + 2 * 2 nechaga teng?", options: ["8", "6", "4", "10"], correct: 1 },
+      { q: "Quyosh qaysi tomondan chiqadi?", options: ["G'arb", "Janub", "Sharq", "Shimol"], correct: 2 },
+      { q: "Eng katta okean qaysi?", options: ["Atlantika", "Hind", "Tinch", "Shtil"], correct: 2 }
+    ];
+
+    let currentQuestionIndex = 0;
+    let totalScore = 0;
+
+    // Savolni ekranga chiqarish
+    function loadQuestion() {
+      const q = quizData[currentQuestionIndex];
+      document.getElementById("questionText").innerText = q.q;
+      
+      const optionsBox = document.getElementById("optionsBox");
+      optionsBox.innerHTML = "";
+
+      q.options.forEach((opt, idx) => {
+        const btn = document.createElement("button");
+        btn.className = "btn btn-option";
+        btn.innerText = opt;
+        btn.onclick = () => checkAnswer(idx);
+        optionsBox.appendChild(btn);
+      });
+    }
+
+    // Javobni tekshirish va keyingi savolga o'tish
+    async function checkAnswer(selectedIndex) {
+      const q = quizData[currentQuestionIndex];
+      if (selectedIndex === q.correct) {
+        totalScore += 10;
+        document.getElementById("scoreDisplay").innerText = `Jami ball: ${totalScore}`;
+        await sendScoreToBackend(10); // 10 ballni Supabase'ga yuborish
+      }
+
+      // Keyingi savolga o'tish (cheksiz takrorlanish)
+      currentQuestionIndex = (currentQuestionIndex + 1) % quizData.length;
+      loadQuestion();
+    }
+
+    // Ballni Supabase bazasiga saqlash
     async function sendScoreToBackend(points) {
       try {
         if (!window.Telegram || !window.Telegram.WebApp || !window.Telegram.WebApp.initDataUnsafe.user) {
@@ -105,7 +162,7 @@
       }
     }
 
-    // Reytingni ko'rsatish
+    // Reytingni ko'rsatish/yashirish
     async function toggleLeaderboard() {
       const card = document.getElementById("leaderCard");
       if (card.style.display === "block") {
@@ -141,6 +198,9 @@
         list.innerHTML = "Reytingni yuklab bo'lmadi.";
       }
     }
+
+    // Ilovani ishga tushirish
+    loadQuestion();
   </script>
 
 </body>
