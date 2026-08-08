@@ -83,7 +83,7 @@
   <div id="scoreDisplay">Jami ball: 0</div>
 
   <div class="card" id="quizCard">
-    <h3 id="questionText">Savol yuklanmoqda...</h3>
+    <h3 id="questionText">O'zbek tiliga tarjima qilinmoqda...</h3>
     <div id="optionsBox"></div>
   </div>
 
@@ -113,40 +113,50 @@
     const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imhxam1jZmF5d2Zqd2pxYW15YWlrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODYyMDE3MDEsImV4cCI6MjEwMTc3NzcwMX0.WHzdySBpsjONCB1t3aEsIEh9CGr0uybye2qzg1Ovghw";
     const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-    // RapidAPI Google API ma'lumotlari
     const RAPIDAPI_KEY = "02813b13edmshe6df87c9765870ap18c536jsn15e989b9415f";
-    const RAPIDAPI_HOST = "google-api31.p.rapidapi.com";
 
     let currentQuestion = null;
     let totalScore = 0;
 
-    // RapidAPI orqali tarjima qilish
+    // Ishonchli va parallel tarjima funksiyasi
     async function translateText(text) {
+      if (!text) return "";
+      
+      // 1-urinish: RapidAPI Google Translate (v2)
       try {
-        const response = await fetch("https://google-api31.p.rapidapi.com/translate", {
+        const res = await fetch("https://google-translate1.p.rapidapi.com/language/translate/v2", {
           method: "POST",
           headers: {
-            "content-type": "application/json",
-            "x-rapidapi-key": RAPIDAPI_KEY,
-            "x-rapidapi-host": RAPIDAPI_HOST
+            "content-type": "application/x-www-form-urlencoded",
+            "X-RapidAPI-Key": RAPIDAPI_KEY,
+            "X-RapidAPI-Host": "google-translate1.p.rapidapi.com"
           },
-          body: JSON.stringify({
-            text: text,
-            to: "uz",
-            from: "en"
-          })
+          body: new URLSearchParams({ q: text, target: "uz", source: "en" })
         });
-
-        const data = await response.json();
-        return data?.translated_text || data?.result || data?.translation || data?.text || text;
+        const data = await res.json();
+        if (data?.data?.translations?.[0]?.translatedText) {
+          return data.data.translations[0].translatedText;
+        }
       } catch (e) {
-        console.error("Tarjima xatoligi:", e);
-        return text;
+        console.log("RapidAPI1 xatosi:", e);
       }
+
+      // 2-urinish: MyMemory Tarjimoni (Zaxira)
+      try {
+        const res2 = await fetch(`https://api.mymemory.translated.net/get?q=${encodeURIComponent(text)}&langpair=en|uz`);
+        const data2 = await res2.json();
+        if (data2?.responseData?.translatedText) {
+          return data2.responseData.translatedText;
+        }
+      } catch (e) {
+        console.log("MyMemory xatosi:", e);
+      }
+
+      return text; // Tarjima o'xshamasa asli qaytadi
     }
 
     async function fetchNewQuestion() {
-      document.getElementById("questionText").innerText = "O'zbekchaga tarjima qilinmoqda...";
+      document.getElementById("questionText").innerText = "Savol o'zbek tiliga o'girilmoqda...";
       document.getElementById("optionsBox").innerHTML = "";
 
       try {
@@ -162,11 +172,11 @@
           const correctIndex = Math.floor(Math.random() * 4);
           rawOptions.splice(correctIndex, 0, qData.correct_answer);
 
-          // Savol va variantlarni tarjima qilish
-          const translatedQuestion = await translateText(rawQuestion);
-          const translatedOptions = await Promise.all(
-            rawOptions.map(opt => translateText(parser.parseFromString(opt, 'text/html').body.textContent))
-          );
+          // Parallel ravishda tezkor tarjima qilish
+          const [translatedQuestion, ...translatedOptions] = await Promise.all([
+            translateText(rawQuestion),
+            ...rawOptions.map(opt => translateText(parser.parseFromString(opt, 'text/html').body.textContent))
+          ]);
 
           currentQuestion = {
             question: translatedQuestion,
@@ -298,5 +308,5 @@
   </script>
 
 </body>
-</html>
+  </html>
 
