@@ -1,86 +1,147 @@
-<!-- Supabase kutubxonasini head qismiga qo'shing -->
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-
-<script>
-  // Supabase sozlamalari
-  const SUPABASE_URL = "https://hqjmcfaywfjwjqamyaik.supabase.co";
-  const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imhxam1jZmF5d2Zqd2pxYW15YWlrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODYyMDE3MDEsImV4cCI6MjEwMTc3NzcwMX0.WHzdySBpsjONCB1t3aEsIEh9CGr0uybye2qzg1Ovghw";
+<!DOCTYPE html>
+<html lang="uz">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SMART AREA</title>
   
-  const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+  <!-- Telegram Web App SDK -->
+  <script src="https://telegram.org/js/telegram-web-app.js"></script>
 
-  // Ballni Supabase bazasiga saqlash
-  async function sendScoreToBackend(points) {
-    try {
-      if (!window.Telegram || !window.Telegram.WebApp || !window.Telegram.WebApp.initDataUnsafe.user) {
+  <!-- Supabase JS Library -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background-color: #0f172a;
+      color: #ffffff;
+      margin: 0;
+      padding: 15px;
+      text-align: center;
+    }
+    .card {
+      background: #1e293b;
+      padding: 15px;
+      border-radius: 12px;
+      margin-top: 15px;
+      display: none;
+    }
+    .btn {
+      background: #3b82f6;
+      color: white;
+      border: none;
+      padding: 10px 20px;
+      font-size: 16px;
+      border-radius: 8px;
+      cursor: pointer;
+      margin: 5px;
+    }
+    .leader-item {
+      display: flex;
+      justify-content: space-between;
+      padding: 8px 0;
+      border-bottom: 1px solid #334155;
+    }
+  </style>
+</head>
+<body>
+
+  <h2>🎮 SMART AREA</h2>
+  <p>Savol-javob o'yini</p>
+
+  <button class="btn" onclick="toggleLeaderboard()">🏆 Top 10 Reyting</button>
+
+  <div id="leaderCard" class="card">
+    <h3>Peshqadamlar</h3>
+    <div id="leaderList">Yuklanmoqda...</div>
+  </div>
+
+  <script>
+    // Telegram Web App tayyorgarligi
+    if (window.Telegram && window.Telegram.WebApp) {
+      window.Telegram.WebApp.ready();
+      window.Telegram.WebApp.expand();
+    }
+
+    // Supabase sozlamalari
+    const SUPABASE_URL = "https://hqjmcfaywfjwjqamyaik.supabase.co";
+    const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imhxam1jZmF5d2Zqd2pxYW15YWlrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODYyMDE3MDEsImV4cCI6MjEwMTc3NzcwMX0.WHzdySBpsjONCB1t3aEsIEh9CGr0uybye2qzg1Ovghw";
+    
+    const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+    // Ballni saqlash
+    async function sendScoreToBackend(points) {
+      try {
+        if (!window.Telegram || !window.Telegram.WebApp || !window.Telegram.WebApp.initDataUnsafe.user) {
+          return;
+        }
+        const tgUser = window.Telegram.WebApp.initDataUnsafe.user;
+
+        const { data } = await supabaseClient
+          .from('leaderboard')
+          .select('*')
+          .eq('user_id', tgUser.id.toString());
+
+        if (data && data.length > 0) {
+          await supabaseClient
+            .from('leaderboard')
+            .update({ 
+              score: Number(data[0].score) + Number(points), 
+              name: tgUser.first_name 
+            })
+            .eq('user_id', tgUser.id.toString());
+        } else {
+          await supabaseClient
+            .from('leaderboard')
+            .insert([{ 
+              user_id: tgUser.id.toString(), 
+              name: tgUser.first_name, 
+              score: Number(points) 
+            }]);
+        }
+      } catch (e) {
+        console.error("Xato:", e);
+      }
+    }
+
+    // Reytingni ko'rsatish
+    async function toggleLeaderboard() {
+      const card = document.getElementById("leaderCard");
+      if (card.style.display === "block") {
+        card.style.display = "none";
         return;
       }
-      const tgUser = window.Telegram.WebApp.initDataUnsafe.user;
-
-      // Avval foydalanuvchi bazada bor-yo'qligini tekshiramiz
-      const { data } = await supabaseClient
-        .from('leaderboard')
-        .select('*')
-        .eq('user_id', tgUser.id.toString());
-
-      if (data && data.length > 0) {
-        // Agar bor bo'lsa, ballni yangilab oshiramiz
-        await supabaseClient
-          .from('leaderboard')
-          .update({ 
-            score: Number(data[0].score) + Number(points), 
-            name: tgUser.first_name 
-          })
-          .eq('user_id', tgUser.id.toString());
-      } else {
-        // Yangi o'yinchi bo'lsa bazaga qo'shamiz
-        await supabaseClient
-          .from('leaderboard')
-          .insert([{ 
-            user_id: tgUser.id.toString(), 
-            name: tgUser.first_name, 
-            score: Number(points) 
-          }]);
-      }
-    } catch (e) {
-      console.error("Xato:", e);
-    }
-  }
-
-  // Reytingni bazadan yuklab ko'rsatish
-  async function toggleLeaderboard() {
-    const card = document.getElementById("leaderCard");
-    if (card.style.display === "block") {
-      card.style.display = "none";
-      return;
-    }
-    card.style.display = "block";
-    
-    const list = document.getElementById("leaderList");
-    list.innerHTML = "Yuklanmoqda...";
-
-    try {
-      const { data, error } = await supabaseClient
-        .from('leaderboard')
-        .select('*')
-        .order('score', { ascending: false })
-        .limit(10);
-
-      if (error) throw error;
-
-      if (data && data.length > 0) {
-        list.innerHTML = data.map((u, i) => `
-          <div class="leader-item">
-            <span>${i + 1}. ${u.name}</span>
-            <b>${u.score} ball</b>
-          </div>
-        `).join("");
-      } else {
-        list.innerHTML = "Hali hech kim ball to'plamadi.";
-      }
-    } catch (e) {
-      console.error("Reyting xatosi:", e);
-      list.innerHTML = "Reytingni yuklab bo'lmadi.";
-    }
-  }
-      </script>
+      card.style.display = "block";
       
+      const list = document.getElementById("leaderList");
+      list.innerHTML = "Yuklanmoqda...";
+
+      try {
+        const { data, error } = await supabaseClient
+          .from('leaderboard')
+          .select('*')
+          .order('score', { ascending: false })
+          .limit(10);
+
+        if (error) throw error;
+
+        if (data && data.length > 0) {
+          list.innerHTML = data.map((u, i) => `
+            <div class="leader-item">
+              <span>${i + 1}. ${u.name}</span>
+              <b>${u.score} ball</b>
+            </div>
+          `).join("");
+        } else {
+          list.innerHTML = "Hali hech kim ball to'plamadi.";
+        }
+      } catch (e) {
+        console.error("Reyting xatosi:", e);
+        list.innerHTML = "Reytingni yuklab bo'lmadi.";
+      }
+    }
+  </script>
+
+</body>
+</html>
