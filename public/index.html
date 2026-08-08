@@ -1,195 +1,7 @@
-<!DOCTYPE html>
-<html lang="uz">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>SMART ARENA</title>
-  <script src="https://telegram.org/js/telegram-web-app.js"></script>
-  <style>
-    * {
-      margin: 0;
-      padding: 0;
-      box-sizing: border-box;
-      font-family: -apple-system, BlinkMacSystemFont, sans-serif;
-      user-select: none;
-      -webkit-tap-highlight-color: transparent;
-    }
-    body {
-      background: #0b0f19;
-      color: #ffffff;
-      padding: 15px;
-      display: flex;
-      justify-content: center;
-    }
-    .app {
-      width: 100%;
-      max-width: 420px;
-      display: flex;
-      flex-direction: column;
-      gap: 12px;
-    }
-    .header {
-      background: #151c2c;
-      padding: 12px 15px;
-      border-radius: 14px;
-      border: 1px solid #1e293b;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-    }
-    .user-info { display: flex; flex-direction: column; gap: 2px; }
-    .user-name { font-weight: bold; font-size: 15px; }
-    .hearts { color: #ef4444; font-size: 14px; letter-spacing: 2px; }
-    .score { color: #f59e0b; font-weight: bold; font-size: 16px; }
-
-    .card {
-      background: #151c2c;
-      padding: 18px;
-      border-radius: 16px;
-      border: 1px solid #1e293b;
-      display: flex;
-      flex-direction: column;
-      gap: 12px;
-    }
-    .q-counter { font-size: 12px; color: #3b82f6; font-weight: bold; }
-    .question { font-size: 16px; font-weight: bold; color: #f8fafc; line-height: 1.4; }
-    
-    .options { display: flex; flex-direction: column; gap: 8px; margin-top: 5px; }
-    .btn {
-      background: rgba(255, 255, 255, 0.05);
-      border: 1px solid #3b82f6;
-      color: white;
-      padding: 12px;
-      border-radius: 10px;
-      font-size: 14px;
-      text-align: left;
-      cursor: pointer;
-      transition: 0.2s;
-    }
-    .btn:active { background: rgba(59, 130, 246, 0.2); }
-    .btn.correct { background: #22c55e !important; border-color: #22c55e !important; }
-    .btn.wrong { background: #ef4444 !important; border-color: #ef4444 !important; }
-
-    .leaderboard { display: none; margin-top: 10px; }
-    .leader-item {
-      display: flex;
-      justify-content: space-between;
-      padding: 8px 12px;
-      background: rgba(255,255,255,0.03);
-      border-radius: 8px;
-      margin-bottom: 6px;
-      font-size: 14px;
-    }
-    .tab-btn {
-      background: #3b82f6;
-      border: none;
-      color: white;
-      padding: 10px;
-      border-radius: 10px;
-      font-weight: bold;
-      cursor: pointer;
-      margin-top: 5px;
-    }
-  </style>
-</head>
-<body>
-
-<div class="app">
-  <div class="header">
-    <div class="user-info">
-      <div class="user-name" id="userName">O'yinchi</div>
-      <div class="hearts" id="hearts">❤️❤️❤️</div>
-    </div>
-    <div class="score" id="scoreText">0 ball</div>
-  </div>
-
-  <div class="card" id="quizCard">
-    <div class="q-counter" id="qCounter">Savol #1</div>
-    <div class="question" id="qText">O'zbekiston poytaxti qaysi shahar?</div>
-    <div class="options" id="optionsBox"></div>
-  </div>
-
-  <button class="tab-btn" onclick="toggleLeaderboard()">🏆 Top 10 Reyting</button>
-
-  <div class="card leaderboard" id="leaderCard">
-    <div class="question">Top O'yinchilar</div>
-    <div id="leaderList">Yuklanmoqda...</div>
-  </div>
-</div>
-
-<script>
-  const tg = window.Telegram?.WebApp;
-  if (tg) tg.expand();
-
-  // Vercel serverless API backend manzili
-  const SERVER_URL = "https://super-quiz-mmmmmmmm333s-projects.vercel.app";
-
-  const user = tg?.initDataUnsafe?.user || { id: 12345, first_name: "O'yinchi" };
-  document.getElementById("userName").innerText = user.first_name;
-
-  let score = 0;
-  let lives = 3;
-  let currentQ = 0;
-
-  // Doimiy bir xil savollar to'plami
-  const questions = [
-    { q: "O'zbekiston poytaxti qaysi shahar?", options: ["Toshkent", "Samarqand", "Buxoro", "Xiva"], a: 0 },
-    { q: "1 oyda nechta kun bor (o'rtacha)?", options: ["20", "25", "30", "40"], a: 2 },
-    { q: "Quyosh qaysi tomondan chiqadi?", options: ["G'arb", "Sharq", "Shimol", "Janub"], a: 1 },
-    { q: "Dunyo xaritasida nechta okean bor?", options: ["3 ta", "4 ta", "5 ta", "6 ta"], a: 2 }
-  ];
-
-  function renderQuestion() {
-    if (lives <= 0) {
-      alert("O'yin tugadi! Yana qayta urinib ko'ring.");
-      lives = 3;
-      score = 0;
-      currentQ = 0;
-      updateUI();
-    }
-
-    const q = questions[currentQ % questions.length];
-    document.getElementById("qCounter").innerText = `Savol #${currentQ + 1}`;
-    document.getElementById("qText").innerText = q.q;
-    
-    const box = document.getElementById("optionsBox");
-    box.innerHTML = "";
-
-    q.options.forEach((opt, idx) => {
-      const btn = document.createElement("button");
-      btn.className = "btn";
-      btn.innerText = opt;
-      btn.onclick = () => checkAnswer(idx, q.a, btn);
-      box.appendChild(btn);
-    });
-  }
-
-  function checkAnswer(selected, correct, btn) {
-    if (selected === correct) {
-      btn.classList.add("correct");
-      score += 10;
-      sendScoreToBackend(score);
-    } else {
-      btn.classList.add("wrong");
-      lives--;
-    }
-
-    updateUI();
-    setTimeout(() => {
-      currentQ++;
-      renderQuestion();
-    }, 600);
-  }
-
-  function updateUI() {
-    document.getElementById("scoreText").innerText = `${score} ball`;
-    document.getElementById("hearts").innerText = "❤️".repeat(Math.max(0, lives));
-  }
-
   // Ballni Vercel backend'iga yuborish
   async function sendScoreToBackend(points) {
     try {
-      await fetch(`${SERVER_URL}/api/score`, {
+      await fetch('/api/score', {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -216,10 +28,11 @@
     list.innerHTML = "Yuklanmoqda...";
 
     try {
-      const res = await fetch(`${SERVER_URL}/api/leaderboard`);
+      const res = await fetch('/api/leaderboard');
+      if (!res.ok) throw new Error("Server xatosi");
       const data = await res.json();
 
-      if (data.success && data.leaderboard.length > 0) {
+      if (data.leaderboard && data.leaderboard.length > 0) {
         list.innerHTML = data.leaderboard.map((u, i) => `
           <div class="leader-item">
             <span>${i + 1}. ${u.name}</span>
@@ -230,11 +43,8 @@
         list.innerHTML = "Hali hech kim ball to'plamadi.";
       }
     } catch (e) {
+      console.error(e);
       list.innerHTML = "Reytingni yuklab bo'lmadi.";
     }
   }
 
-  renderQuestion();
-</script>
-</body>
-</html>
