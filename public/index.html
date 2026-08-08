@@ -53,7 +53,7 @@
       font-weight: bold;
     }
     
-    /* Sertifikat dizayni */
+    /* Sertifikat */
     .certificate {
       background: #f8fafc;
       color: #0f172a;
@@ -85,7 +85,7 @@
 
   <!-- Savol kartochkasi -->
   <div class="card" id="quizCard">
-    <h3 id="questionText">Savol yuklanmoqda...</h3>
+    <h3 id="questionText">Savol o'zbek tiliga tarjima qilinmoqda...</h3>
     <div id="optionsBox"></div>
   </div>
 
@@ -120,9 +120,20 @@
     let currentQuestion = null;
     let totalScore = 0;
 
-    // OpenTDB API orqali cheksiz tasodifiy savol yuklash
+    // Matnni O'zbek tiliga tarjima qilish funksiyasi
+    async function translateToUzbek(text) {
+      try {
+        const res = await fetch(`https://api.mymemory.translated.net/get?q=${encodeURIComponent(text)}&langpair=en|uz`);
+        const data = await res.json();
+        return data.responseData.translatedText || text;
+      } catch (e) {
+        return text; // Tarjima ishlamay qolsa asl matnni qaytaradi
+      }
+    }
+
+    // OpenTDB API orqali savolni olib, o'zbekchaga tarjima qilish
     async function fetchNewQuestion() {
-      document.getElementById("questionText").innerText = "Yangi savol yuklanmoqda...";
+      document.getElementById("questionText").innerText = "Yangi savol tarjima qilinmoqda...";
       document.getElementById("optionsBox").innerHTML = "";
 
       try {
@@ -132,18 +143,22 @@
         if (data.results && data.results.length > 0) {
           const qData = data.results[0];
           
-          // HTML belgilarini to'g'rilash (masalan &quot; -> ")
           const parser = new DOMParser();
-          const decodedQuestion = parser.parseFromString(qData.question, 'text/html').body.textContent;
+          const rawQuestion = parser.parseFromString(qData.question, 'text/html').body.textContent;
           
-          // Variantlarni aralashtirish
-          let options = [...qData.incorrect_answers];
+          let rawOptions = [...qData.incorrect_answers];
           const correctIndex = Math.floor(Math.random() * 4);
-          options.splice(correctIndex, 0, qData.correct_answer);
+          rawOptions.splice(correctIndex, 0, qData.correct_answer);
+
+          // Savol va barcha variantlarni parallel tarjima qilish
+          const translatedQuestion = await translateToUzbek(rawQuestion);
+          const translatedOptions = await Promise.all(
+            rawOptions.map(opt => translateToUzbek(parser.parseFromString(opt, 'text/html').body.textContent))
+          );
 
           currentQuestion = {
-            question: decodedQuestion,
-            options: options.map(opt => parser.parseFromString(opt, 'text/html').body.textContent),
+            question: translatedQuestion,
+            options: translatedOptions,
             correctIndex: correctIndex
           };
 
@@ -174,7 +189,7 @@
         document.getElementById("scoreDisplay").innerText = `Jami ball: ${totalScore}`;
         await sendScoreToBackend(10);
       }
-      fetchNewQuestion(); // Darhol keyingi cheksiz savolga o'tish
+      fetchNewQuestion();
     }
 
     async function sendScoreToBackend(points) {
@@ -245,7 +260,6 @@
       }
     }
 
-    // Kun oxirida eng yuqori ball to'plagan chempion sertifikatini ko'rsatish
     async function checkCertificate() {
       const certCard = document.getElementById("certCard");
       if (certCard.style.display === "block") {
@@ -275,10 +289,9 @@
       }
     }
 
-    // O'yinni boshlash
+    // Boshlash
     fetchNewQuestion();
   </script>
 
 </body>
 </html>
-
