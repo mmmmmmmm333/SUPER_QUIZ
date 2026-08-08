@@ -1,3 +1,15 @@
+  <!-- Tugma ham HTML teglari orasida turishi kerak -->
+  <button class="tab-btn" onclick="toggleLeaderboard()">🏆 Top 10 Reyting</button>
+
+  <div class="card leaderboard" id="leaderCard">
+    <div class="question">Top O'yinchilar</div>
+    <div id="leaderList">Yuklanmoqda...</div>
+  </div>
+</div>
+
+<script>
+  // JavaScript kodingiz aynan shu <script> tegining ICHIDA bo'lishi shart!
+
   // Ballni Vercel backend'iga yuborish
   async function sendScoreToBackend(points) {
     try {
@@ -47,4 +59,7 @@
       list.innerHTML = "Reytingni yuklab bo'lmadi.";
     }
   }
+</script>
+</body>
+</html>
 
