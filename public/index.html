@@ -1,33 +1,52 @@
-  <!-- Tugma ham HTML teglari orasida turishi kerak -->
-  <button class="tab-btn" onclick="toggleLeaderboard()">🏆 Top 10 Reyting</button>
-
-  <div class="card leaderboard" id="leaderCard">
-    <div class="question">Top O'yinchilar</div>
-    <div id="leaderList">Yuklanmoqda...</div>
-  </div>
-</div>
+<!-- Supabase kutubxonasini head qismiga qo'shing -->
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
 <script>
-  // JavaScript kodingiz aynan shu <script> tegining ICHIDA bo'lishi shart!
+  // Supabase sozlamalari
+  const SUPABASE_URL = "https://hqjmcfaywfjwjqamyaik.supabase.co";
+  const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imhxam1jZmF5d2Zqd2pxYW15YWlrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODYyMDE3MDEsImV4cCI6MjEwMTc3NzcwMX0.WHzdySBpsjONCB1t3aEsIEh9CGr0uybye2qzg1Ovghw";
+  
+  const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-  // Ballni Vercel backend'iga yuborish
+  // Ballni Supabase bazasiga saqlash
   async function sendScoreToBackend(points) {
     try {
-      await fetch('/api/score', {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          userId: user.id,
-          name: user.first_name,
-          points: points
-        })
-      });
+      if (!window.Telegram || !window.Telegram.WebApp || !window.Telegram.WebApp.initDataUnsafe.user) {
+        return;
+      }
+      const tgUser = window.Telegram.WebApp.initDataUnsafe.user;
+
+      // Avval foydalanuvchi bazada bor-yo'qligini tekshiramiz
+      const { data } = await supabaseClient
+        .from('leaderboard')
+        .select('*')
+        .eq('user_id', tgUser.id.toString());
+
+      if (data && data.length > 0) {
+        // Agar bor bo'lsa, ballni yangilab oshiramiz
+        await supabaseClient
+          .from('leaderboard')
+          .update({ 
+            score: Number(data[0].score) + Number(points), 
+            name: tgUser.first_name 
+          })
+          .eq('user_id', tgUser.id.toString());
+      } else {
+        // Yangi o'yinchi bo'lsa bazaga qo'shamiz
+        await supabaseClient
+          .from('leaderboard')
+          .insert([{ 
+            user_id: tgUser.id.toString(), 
+            name: tgUser.first_name, 
+            score: Number(points) 
+          }]);
+      }
     } catch (e) {
-      console.log("Score yuborishda xato:", e);
+      console.error("Xato:", e);
     }
   }
 
-  // Reytingni Vercel API'dan olish
+  // Reytingni bazadan yuklab ko'rsatish
   async function toggleLeaderboard() {
     const card = document.getElementById("leaderCard");
     if (card.style.display === "block") {
@@ -40,12 +59,16 @@
     list.innerHTML = "Yuklanmoqda...";
 
     try {
-      const res = await fetch('/api/leaderboard');
-      if (!res.ok) throw new Error("Server xatosi");
-      const data = await res.json();
+      const { data, error } = await supabaseClient
+        .from('leaderboard')
+        .select('*')
+        .order('score', { ascending: false })
+        .limit(10);
 
-      if (data.leaderboard && data.leaderboard.length > 0) {
-        list.innerHTML = data.leaderboard.map((u, i) => `
+      if (error) throw error;
+
+      if (data && data.length > 0) {
+        list.innerHTML = data.map((u, i) => `
           <div class="leader-item">
             <span>${i + 1}. ${u.name}</span>
             <b>${u.score} ball</b>
@@ -55,11 +78,9 @@
         list.innerHTML = "Hali hech kim ball to'plamadi.";
       }
     } catch (e) {
-      console.error(e);
+      console.error("Reyting xatosi:", e);
       list.innerHTML = "Reytingni yuklab bo'lmadi.";
     }
   }
-</script>
-</body>
-</html>
-
+      </script>
+      
