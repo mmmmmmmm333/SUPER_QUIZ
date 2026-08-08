@@ -52,6 +52,30 @@
       color: #38bdf8;
       font-weight: bold;
     }
+    
+    /* Sertifikat dizayni */
+    .certificate {
+      background: #f8fafc;
+      color: #0f172a;
+      border: 5px solid #f59e0b;
+      border-radius: 15px;
+      padding: 20px;
+      margin-top: 15px;
+      display: none;
+      box-shadow: 0 10px 25px rgba(0,0,0,0.5);
+    }
+    .cert-title {
+      font-size: 20px;
+      font-weight: bold;
+      color: #b45309;
+    }
+    .cert-name {
+      font-size: 24px;
+      font-weight: bold;
+      color: #1d4ed8;
+      margin: 10px 0;
+      text-decoration: underline;
+    }
   </style>
 </head>
 <body>
@@ -66,6 +90,7 @@
   </div>
 
   <button class="btn" style="background: #10b981;" onclick="toggleLeaderboard()">🏆 Top 10 Reyting</button>
+  <button class="btn" style="background: #f59e0b;" onclick="checkCertificate()">📜 Kun chempioni sertifikati</button>
 
   <!-- Reyting kartochkasi -->
   <div id="leaderCard" class="card" style="display: none;">
@@ -73,38 +98,68 @@
     <div id="leaderList">Yuklanmoqda...</div>
   </div>
 
+  <!-- Sertifikat oynasi -->
+  <div id="certCard" class="certificate">
+    <div class="cert-title">🎖 KUN CHEMPIONI SERTIFIKATI 🎖</div>
+    <p>Ushbu sertifikat SMART AREA o'yinida kunning eng yuqori natijasini ko'rsatgani uchun:</p>
+    <div class="cert-name" id="certWinnerName">Foydalanuvchi</div>
+    <p>ga tantanali ravishda topshiriladi!</p>
+    <small id="certDate"></small>
+  </div>
+
   <script>
-    // Telegram WebApp sozlanishi
     if (window.Telegram && window.Telegram.WebApp) {
       window.Telegram.WebApp.ready();
       window.Telegram.WebApp.expand();
     }
 
-    // Supabase sozlamalari
     const SUPABASE_URL = "https://hqjmcfaywfjwjqamyaik.supabase.co";
     const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imhxam1jZmF5d2Zqd2pxYW15YWlrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODYyMDE3MDEsImV4cCI6MjEwMTc3NzcwMX0.WHzdySBpsjONCB1t3aEsIEh9CGr0uybye2qzg1Ovghw";
     const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-    // Savollar ro'yxati (aylanib takrorlanaveradi)
-    const quizData = [
-      { q: "O'zbekiston poytaxti qaysi shahar?", options: ["Toshkent", "Samarqand", "Buxoro", "Xiva"], correct: 0 },
-      { q: "2 + 2 * 2 nechaga teng?", options: ["8", "6", "4", "10"], correct: 1 },
-      { q: "Quyosh qaysi tomondan chiqadi?", options: ["G'arb", "Janub", "Sharq", "Shimol"], correct: 2 },
-      { q: "Eng katta okean qaysi?", options: ["Atlantika", "Hind", "Tinch", "Shtil"], correct: 2 }
-    ];
-
-    let currentQuestionIndex = 0;
+    let currentQuestion = null;
     let totalScore = 0;
 
-    // Savolni ekranga chiqarish
-    function loadQuestion() {
-      const q = quizData[currentQuestionIndex];
-      document.getElementById("questionText").innerText = q.q;
-      
+    // OpenTDB API orqali cheksiz tasodifiy savol yuklash
+    async function fetchNewQuestion() {
+      document.getElementById("questionText").innerText = "Yangi savol yuklanmoqda...";
+      document.getElementById("optionsBox").innerHTML = "";
+
+      try {
+        const response = await fetch("https://opentdb.com/api.php?amount=1&type=multiple");
+        const data = await response.json();
+        
+        if (data.results && data.results.length > 0) {
+          const qData = data.results[0];
+          
+          // HTML belgilarini to'g'rilash (masalan &quot; -> ")
+          const parser = new DOMParser();
+          const decodedQuestion = parser.parseFromString(qData.question, 'text/html').body.textContent;
+          
+          // Variantlarni aralashtirish
+          let options = [...qData.incorrect_answers];
+          const correctIndex = Math.floor(Math.random() * 4);
+          options.splice(correctIndex, 0, qData.correct_answer);
+
+          currentQuestion = {
+            question: decodedQuestion,
+            options: options.map(opt => parser.parseFromString(opt, 'text/html').body.textContent),
+            correctIndex: correctIndex
+          };
+
+          renderQuestion();
+        }
+      } catch (e) {
+        document.getElementById("questionText").innerText = "Savol yuklashda xatolik! Qaytadan urinib ko'ring.";
+      }
+    }
+
+    function renderQuestion() {
+      document.getElementById("questionText").innerText = currentQuestion.question;
       const optionsBox = document.getElementById("optionsBox");
       optionsBox.innerHTML = "";
 
-      q.options.forEach((opt, idx) => {
+      currentQuestion.options.forEach((opt, idx) => {
         const btn = document.createElement("button");
         btn.className = "btn btn-option";
         btn.innerText = opt;
@@ -113,26 +168,18 @@
       });
     }
 
-    // Javobni tekshirish va keyingi savolga o'tish
     async function checkAnswer(selectedIndex) {
-      const q = quizData[currentQuestionIndex];
-      if (selectedIndex === q.correct) {
+      if (selectedIndex === currentQuestion.correctIndex) {
         totalScore += 10;
         document.getElementById("scoreDisplay").innerText = `Jami ball: ${totalScore}`;
-        await sendScoreToBackend(10); // 10 ballni Supabase'ga yuborish
+        await sendScoreToBackend(10);
       }
-
-      // Keyingi savolga o'tish (cheksiz takrorlanish)
-      currentQuestionIndex = (currentQuestionIndex + 1) % quizData.length;
-      loadQuestion();
+      fetchNewQuestion(); // Darhol keyingi cheksiz savolga o'tish
     }
 
-    // Ballni Supabase bazasiga saqlash
     async function sendScoreToBackend(points) {
       try {
-        if (!window.Telegram || !window.Telegram.WebApp || !window.Telegram.WebApp.initDataUnsafe.user) {
-          return;
-        }
+        if (!window.Telegram || !window.Telegram.WebApp || !window.Telegram.WebApp.initDataUnsafe.user) return;
         const tgUser = window.Telegram.WebApp.initDataUnsafe.user;
 
         const { data } = await supabaseClient
@@ -162,7 +209,6 @@
       }
     }
 
-    // Reytingni ko'rsatish/yashirish
     async function toggleLeaderboard() {
       const card = document.getElementById("leaderCard");
       if (card.style.display === "block") {
@@ -170,6 +216,7 @@
         return;
       }
       card.style.display = "block";
+      document.getElementById("certCard").style.display = "none";
       
       const list = document.getElementById("leaderList");
       list.innerHTML = "Yuklanmoqda...";
@@ -194,14 +241,44 @@
           list.innerHTML = "Hali hech kim ball to'plamadi.";
         }
       } catch (e) {
-        console.error("Reyting xatosi:", e);
         list.innerHTML = "Reytingni yuklab bo'lmadi.";
       }
     }
 
-    // Ilovani ishga tushirish
-    loadQuestion();
+    // Kun oxirida eng yuqori ball to'plagan chempion sertifikatini ko'rsatish
+    async function checkCertificate() {
+      const certCard = document.getElementById("certCard");
+      if (certCard.style.display === "block") {
+        certCard.style.display = "none";
+        return;
+      }
+
+      document.getElementById("leaderCard").style.display = "none";
+
+      try {
+        const { data, error } = await supabaseClient
+          .from('leaderboard')
+          .select('*')
+          .order('score', { ascending: false })
+          .limit(1);
+
+        if (data && data.length > 0) {
+          const winner = data[0];
+          document.getElementById("certWinnerName").innerText = winner.name;
+          document.getElementById("certDate").innerText = "Sana: " + new Date().toLocaleDateString();
+          certCard.style.display = "block";
+        } else {
+          alert("Hali kun chempioni aniqlanmadi.");
+        }
+      } catch (e) {
+        alert("Sertifikatni yuklab bo'lmadi.");
+      }
+    }
+
+    // O'yinni boshlash
+    fetchNewQuestion();
   </script>
 
 </body>
 </html>
+
