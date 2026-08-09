@@ -34,12 +34,26 @@
       margin: 8px 0;
       width: 100%;
       display: block;
+      box-sizing: border-box;
     }
     .btn-option {
       background: #334155;
+      transition: background 0.2s ease;
     }
     .btn-option:active {
       background: #1d4ed8;
+    }
+    .btn-option:disabled {
+      cursor: not-allowed;
+      opacity: 0.7;
+    }
+    .btn-option.correct {
+      background: #10b981 !important;
+      color: white;
+    }
+    .btn-option.wrong {
+      background: #ef4444 !important;
+      color: white;
     }
     .leader-item {
       display: flex;
@@ -82,7 +96,7 @@
   <div id="scoreDisplay">Jami ball: 0</div>
 
   <div class="card" id="quizCard">
-    <h3 id="questionText">Savol tarjima qilinmoqda...</h3>
+    <h3 id="questionText">Savol o'zbek tiliga tarjima qilinmoqda...</h3>
     <div id="optionsBox"></div>
   </div>
 
@@ -114,44 +128,73 @@
 
     let currentQuestion = null;
     let totalScore = 0;
+    let isProcessing = false;
 
-    // Matnlarni avtomatik o'zbek tiliga tarjima qilish uchun bepul va barqaror funksiya
-    async function translateText(text) {
+    // HTML maxsus belgilarini tozalash (masalan &quot; -> ")
+    function decodeHTML(html) {
+      const txt = document.createElement("textarea");
+      txt.innerHTML = html;
+      return txt.value;
+    }
+
+    // Har doim o'zbek tilida va xatosiz tarjima qiluvchi ikki bosqichli funksiya
+    async function translateToUzbek(text) {
+      if (!text) return "";
+      const cleanText = decodeHTML(text);
+
+      // 1-urinish: Google Translate Asosiy liniya
       try {
-        const url = `https://translate.googleapis.com/translate_a/single?client=gtx&sl=en&tl=uz&dt=t&q=${encodeURIComponent(text)}`;
-        const res = await fetch(url);
-        const data = await res.json();
-        if (data && data[0]) {
-          return data[0].map(item => item[0]).join("");
+        const url1 = `https://translate.googleapis.com/translate_a/single?client=gtx&sl=en&tl=uz&dt=t&q=${encodeURIComponent(cleanText)}`;
+        const res1 = await fetch(url1);
+        if (res1.ok) {
+          const data1 = await res1.json();
+          if (data1 && data1[0]) {
+            const result = data1[0].map(item => item[0]).join("");
+            if (result && result.trim().length > 0) return result;
+          }
         }
       } catch (e) {
-        console.error("Tarjima xatosi:", e);
+        console.warn("1-tarjima liniyasi band, 2-siga o'tilmoqda...");
       }
-      return text; // Xatolik bo'lsa o'zini qaytaradi
+
+      // 2-urinish: Zaxira MyMemory API (Google to'lib qolsa o'zbekcha tarjima qilib beradi)
+      try {
+        const url2 = `https://api.mymemory.translated.net/get?q=${encodeURIComponent(cleanText)}&langpair=en|uz`;
+        const res2 = await fetch(url2);
+        if (res2.ok) {
+          const data2 = await res2.json();
+          if (data2 && data2.responseData && data2.responseData.translatedText) {
+            return data2.responseData.translatedText;
+          }
+        }
+      } catch (e) {
+        console.error("Tarjimada xato:", e);
+      }
+
+      return cleanText;
     }
 
     async function fetchNewQuestion() {
-      document.getElementById("questionText").innerText = "Yangi savol tarjima qilinmoqda...";
+      isProcessing = false;
+      document.getElementById("questionText").innerText = "Yangi savol o'zbek tiliga tarjima qilinmoqda...";
       document.getElementById("optionsBox").innerHTML = "";
 
       try {
-        // OpenTDB orqali cheksiz inglizcha savollar olish
         const response = await fetch("https://opentdb.com/api.php?amount=1&type=multiple");
         const data = await response.json();
         
         if (data.results && data.results.length > 0) {
           const qData = data.results[0];
-          const parser = new DOMParser();
           
-          const rawQuestion = parser.parseFromString(qData.question, 'text/html').body.textContent;
+          const rawQuestion = qData.question;
           let rawOptions = [...qData.incorrect_answers];
           const correctIndex = Math.floor(Math.random() * 4);
           rawOptions.splice(correctIndex, 0, qData.correct_answer);
 
-          // Savol va barcha variantlarni parallel ravishda tezkor tarjima qilish
-          const translatedQuestion = await translateText(rawQuestion);
+          // Savol va barcha javoblarni kafolatlangan o'zbek tiliga tarjima qilish
+          const translatedQuestion = await translateToUzbek(rawQuestion);
           const translatedOptions = await Promise.all(
-            rawOptions.map(opt => translateText(parser.parseFromString(opt, 'text/html').body.textContent))
+            rawOptions.map(opt => translateToUzbek(opt))
           );
 
           currentQuestion = {
@@ -161,9 +204,14 @@
           };
 
           renderQuestion();
+        } else {
+          throw new Error("Savol topilmadi");
         }
       } catch (e) {
-        document.getElementById("questionText").innerText = "Savolni yuklashda xatolik yuz berdi!";
+        document.getElementById("questionText").innerText = "Savol yuklanmadi, qayta urinib ko'ring!";
+        document.getElementById("optionsBox").innerHTML = `
+          <button class="btn" style="background: #3b82f6;" onclick="fetchNewQuestion()">🔄 Qayta savol olish</button>
+        `;
       }
     }
 
@@ -176,18 +224,34 @@
         const btn = document.createElement("button");
         btn.className = "btn btn-option";
         btn.innerText = opt;
-        btn.onclick = () => checkAnswer(idx);
+        btn.onclick = (e) => checkAnswer(idx, e.target);
         optionsBox.appendChild(btn);
       });
     }
 
-    async function checkAnswer(selectedIndex) {
+    async function checkAnswer(selectedIndex, clickedBtn) {
+      if (isProcessing) return; // Qayta bosib ball to'plash to'liq bloklangan
+      isProcessing = true;
+
+      const allButtons = document.querySelectorAll(".btn-option");
+      allButtons.forEach(btn => btn.disabled = true); // Tugmalar darhol muzlatiladi
+
       if (selectedIndex === currentQuestion.correctIndex) {
+        clickedBtn.classList.add("correct");
         totalScore += 10;
         document.getElementById("scoreDisplay").innerText = `Jami ball: ${totalScore}`;
         await sendScoreToBackend(10);
+      } else {
+        clickedBtn.classList.add("wrong");
+        if (allButtons[currentQuestion.correctIndex]) {
+          allButtons[currentQuestion.correctIndex].classList.add("correct");
+        }
       }
-      fetchNewQuestion();
+
+      // 1.2 soniyadan so'ng avtomatik keyingi o'zbekcha savolga o'tiladi
+      setTimeout(() => {
+        fetchNewQuestion();
+      }, 1200);
     }
 
     async function sendScoreToBackend(points) {
@@ -211,7 +275,7 @@
             .insert([{ user_id: tgUser.id.toString(), name: tgUser.first_name, score: Number(points) }]);
         }
       } catch (e) {
-        console.error("Xato:", e);
+        console.error("Supabase xatosi:", e);
       }
     }
 
