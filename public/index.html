@@ -105,7 +105,7 @@
 
   <h2>🎮 SMART AREA</h2>
   
-  <!-- TEPADAGI REKLAMA VA BALL OLISH TUGMASI -->
+  <!-- REKLAMA VA BONUS TUGMASI -->
   <button class="btn btn-reward" onclick="watchAdForBonus()">🎬 Reklama ko'rish va 50 ball olish 🎁</button>
 
   <div id="scoreDisplay">Jami ball: 0</div>
@@ -146,25 +146,48 @@
     let isProcessing = false;
     let questionCount = 0;
 
-    // TEPADAGI TUGMANI BOSGANDA: REKLAMA VA +50 BALL BONUS
-    function watchAdForBonus() {
-      if (typeof show_11523147 === 'function') {
-        show_11523147().then(() => {
-          addBonusPoints(50);
-          alert("Ajoyib! Sizga +50 ball taqdim etildi 🎉");
-        }).catch(e => {
-          alert("Reklamani yuklab bo'lmadi yoki oxirigacha ko'rilmadi.");
-        });
-      } else {
-        alert("Reklama hozircha tayyor emas, bir ozdan keyin qayta urinib ko'ring.");
+    // FOYDALANUVCHINING BAZADAGI BALLINI YUKLASH
+    async function loadUserScore() {
+      try {
+        if (!window.Telegram || !window.Telegram.WebApp || !window.Telegram.WebApp.initDataUnsafe.user) return;
+        const tgUser = window.Telegram.WebApp.initDataUnsafe.user;
+
+        const { data } = await supabaseClient
+          .from('leaderboard')
+          .select('score')
+          .eq('user_id', tgUser.id.toString());
+
+        if (data && data.length > 0) {
+          totalScore = Number(data[0].score) || 0;
+          document.getElementById("scoreDisplay").innerText = `Jami ball: ${totalScore}`;
+        }
+      } catch(e) {
+        console.error("Score yuklashda xato:", e);
       }
     }
 
-    // ODDIY REKLAMA CHAQIRISH (BONUSSIZ)
+    // TEPADAGI TUGMA: REKLAMA VA +50 BALL BONUS
+    async function watchAdForBonus() {
+      if (typeof show_11523147 === 'function') {
+        try {
+          await show_11523147('pop');
+          await addBonusPoints(50);
+          alert("Ajoyib! Sizga +50 ball taqdim etildi 🎉");
+        } catch (e) {
+          console.error("Monetag Ad error:", e);
+          await addBonusPoints(50);
+          alert("Bonus taqdim etildi! 🎉");
+        }
+      } else {
+        alert("Reklama yuklanmoqda yoki bloklangan. Iltimos, bir ozdan keyin qayta urinib ko'ring.");
+      }
+    }
+
+    // HAR 40 TA SAVOLDA ODDIY REKLAMA
     function triggerNormalAd() {
       if (typeof show_11523147 === 'function') {
-        show_11523147().catch(e => {
-          console.warn("Reklama ko'rsatishda xatoliK:", e);
+        show_11523147('pop').catch(e => {
+          console.warn("Reklama ko'rsatishda xatolik:", e);
         });
       }
     }
@@ -289,8 +312,6 @@
       }
 
       questionCount++;
-      
-      // HAR 40 TA SAVOLDAN KEYIN ODDIY REKLAMA CHIQADI (BONUSSIZ)
       if (questionCount % 40 === 0) {
         triggerNormalAd();
       }
@@ -377,7 +398,7 @@
           .order('score', { ascending: false })
           .limit(1);
 
-        if (data && data.length > 0) {
+        if (data && data.length > 0 && data[0].score > 0) {
           const winner = data[0];
           document.getElementById("certWinnerName").innerText = winner.name;
           document.getElementById("certDate").innerText = "Sana: " + new Date().toLocaleDateString();
@@ -390,8 +411,10 @@
       }
     }
 
+    loadUserScore();
     fetchNewQuestion();
   </script>
 
 </body>
-</html>
+  </html>
+  
