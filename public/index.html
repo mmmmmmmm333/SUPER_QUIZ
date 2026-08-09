@@ -170,7 +170,7 @@
     async function watchAdForBonus() {
       if (typeof show_11523147 === 'function') {
         try {
-          await show_11523147('pop');
+          show_11523147('pop').catch(e => console.log("Ad popup", e));
           await addBonusPoints(50);
           alert("Ajoyib! Sizga +50 ball taqdim etildi 🎉");
         } catch (e) {
@@ -179,7 +179,8 @@
           alert("Bonus taqdim etildi! 🎉");
         }
       } else {
-        alert("Reklama yuklanmoqda yoki bloklangan. Iltimos, bir ozdan keyin qayta urinib ko'ring.");
+        await addBonusPoints(50);
+        alert("Bonus taqdim etildi! 🎉");
       }
     }
 
@@ -219,7 +220,7 @@
           }
         }
       } catch (e) {
-        console.warn("1-tarjima liniyasi band, 2-siga o'tilmoqda...");
+        console.warn("1-tarjima liniyasi band...");
       }
 
       try {
@@ -378,7 +379,7 @@
           list.innerHTML = "Hali hech kim ball to'plamadi.";
         }
       } catch (e) {
-        list.innerHTML = "Reytingni yuklab bo'lmadi.";
+        list.innerHTML = "Reytingni yuklab bo'mladi.";
       }
     }
 
@@ -416,5 +417,4 @@
   </script>
 
 </body>
-  </html>
-  
+</html>
