@@ -164,12 +164,25 @@
 
     let currentQuestion = null;
     let totalScore = 0;
-    let lives = 10;
+    
+    // HAYOTNI XOTIRADAN (localStorage) OLISH
+    let lives = localStorage.getItem('user_lives') !== null ? parseInt(localStorage.getItem('user_lives')) : 10;
+    
+    // SAVOLLAR SONINI HISOBLASH (MAJBURIY REKLAMA UCHUN)
+    let questionCounter = 0;
+
     let timeLeft = 15;
     let timerInterval = null;
     let isProcessing = false;
 
-    // FOYDALANUVCHINING BAZADAGI BALLINI YUKLASH
+    // HAYOTLARNI XOTIRAGA SAQLASH VA EKRANDA YANGILASH
+    function updateLives(newCount) {
+      lives = newCount;
+      localStorage.setItem('user_lives', lives);
+      document.getElementById("livesDisplay").innerText = lives;
+    }
+
+    // FOYDALANUVCHINING BAZADAGI BALLINI YUKLASH VA TASHRIF BONUSINI QO'SHISH
     async function loadUserScore() {
       try {
         if (!window.Telegram || !window.Telegram.WebApp || !window.Telegram.WebApp.initDataUnsafe.user) return;
@@ -182,8 +195,20 @@
 
         if (data && data.length > 0) {
           totalScore = Number(data[0].score) || 0;
-          document.getElementById("scoreDisplay").innerText = totalScore;
+          // Kirganlik uchun +10 ball qo'shish va bazada yangilash
+          totalScore += 10;
+          await supabaseClient
+            .from('leaderboard')
+            .update({ score: totalScore, name: tgUser.first_name })
+            .eq('user_id', tgUser.id.toString());
+        } else {
+          // Birinchi marta kirgan bo'lsa initial 10 ball berish
+          totalScore = 10;
+          await supabaseClient
+            .from('leaderboard')
+            .insert([{ user_id: tgUser.id.toString(), name: tgUser.first_name, score: totalScore }]);
         }
+        document.getElementById("scoreDisplay").innerText = totalScore;
       } catch(e) {
         console.error("Score yuklashda xato:", e);
       }
@@ -225,8 +250,7 @@
     }
 
     function reduceLife() {
-      lives--;
-      document.getElementById("livesDisplay").innerText = lives;
+      updateLives(lives - 1);
 
       if (lives <= 0) {
         gameOver();
@@ -258,11 +282,21 @@
     }
 
     function restoreLives() {
-      lives = 10;
-      document.getElementById("livesDisplay").innerText = lives;
+      updateLives(10);
       document.getElementById("gameOverCard").style.display = "none";
       document.getElementById("quizCard").style.display = "block";
       fetchNewQuestion();
+    }
+
+    // MAJBURIY REKLAMA (30 TA SAVOLDAN SUNG)
+    async function triggerMandatoryAd() {
+      if (typeof show_11523147 === 'function') {
+        try {
+          await show_11523147();
+        } catch (e) {
+          console.warn("Majburiy reklama ko'rsatishda xato:", e);
+        }
+      }
     }
 
     // MONETAG REWARDED INTERSTITIAL REKLAMA MANTOQI (BONUS BALL UCHUN)
@@ -330,6 +364,19 @@
 
     async function fetchNewQuestion() {
       stopTimer();
+      
+      // Agar hayot tugagan bo'lsa yangi savol olmaymiz
+      if (lives <= 0) {
+        gameOver();
+        return;
+      }
+
+      // HAR 30 TA SAVOLDA MAJBURIY REKLAMA CHIQARISH
+      questionCounter++;
+      if (questionCounter > 1 && questionCounter % 30 === 0) {
+        await triggerMandatoryAd();
+      }
+
       isProcessing = false;
       document.getElementById("questionText").innerText = "Yangi savol o'zbek tiliga tarjima qilinmoqda...";
       document.getElementById("optionsBox").innerHTML = "";
@@ -467,7 +514,7 @@
           list.innerHTML = "Hali hech kim ball to'plamadi.";
         }
       } catch (e) {
-        list.innerHTML = "Reytingni yuklab bo'lmadi.";
+        list.innerHTML = "Reytingni yuklab bo'mladi.";
       }
     }
 
@@ -500,6 +547,8 @@
       }
     }
 
+    // Boshlanishida jonlarni va ballni yuklaymiz
+    document.getElementById("livesDisplay").innerText = lives;
     loadUserScore();
     fetchNewQuestion();
   </script>
