@@ -39,9 +39,15 @@
       width: 100%;
       display: block;
       box-sizing: border-box;
+      font-weight: bold;
+    }
+    .btn-reward {
+      background: linear-gradient(90deg, #8b5cf6, #ec4899);
+      box-shadow: 0 4px 12px rgba(236, 72, 153, 0.3);
     }
     .btn-option {
       background: #334155;
+      font-weight: normal;
       transition: background 0.2s ease;
     }
     .btn-option:active {
@@ -69,6 +75,7 @@
       font-size: 18px;
       color: #38bdf8;
       font-weight: bold;
+      margin-bottom: 5px;
     }
     .certificate {
       background: #f8fafc;
@@ -97,6 +104,10 @@
 <body>
 
   <h2>🎮 SMART AREA</h2>
+  
+  <!-- TEPADAGI REKLAMA VA BALL OLISH TUGMASI -->
+  <button class="btn btn-reward" onclick="watchAdForBonus()">🎬 Reklama ko'rish va 50 ball olish 🎁</button>
+
   <div id="scoreDisplay">Jami ball: 0</div>
 
   <div class="card" id="quizCard">
@@ -135,33 +146,33 @@
     let isProcessing = false;
     let questionCount = 0;
 
-    // MONETAG IN-APP INTERSTITIAL REKLAMA SOZLAMASI
-    if (typeof show_11523147 === 'function') {
-      try {
-        show_11523147({
-          type: 'inApp',
-          inAppSettings: {
-            frequency: 2,
-            capping: 0.1,
-            interval: 30,
-            timeout: 5,
-            everyPage: false
-          }
+    // TEPADAGI TUGMANI BOSGANDA: REKLAMA VA +50 BALL BONUS
+    function watchAdForBonus() {
+      if (typeof show_11523147 === 'function') {
+        show_11523147().then(() => {
+          addBonusPoints(50);
+          alert("Ajoyib! Sizga +50 ball taqdim etildi 🎉");
+        }).catch(e => {
+          alert("Reklamani yuklab bo'lmadi yoki oxirigacha ko'rilmadi.");
         });
-      } catch (e) {
-        console.warn("Monetag In-App ishga tushirishda xatolik:", e);
+      } else {
+        alert("Reklama hozircha tayyor emas, bir ozdan keyin qayta urinib ko'ring.");
       }
     }
 
-    // MONETAG REWARDED REKLAMANI CHAQIRISH FUNKSIYASI
-    function triggerMonetagAd() {
+    // ODDIY REKLAMA CHAQIRISH (BONUSSIZ)
+    function triggerNormalAd() {
       if (typeof show_11523147 === 'function') {
-        show_11523147().then(() => {
-          console.log("Foydalanuvchi reklamani ko'rib bo'ldi");
-        }).catch(e => {
-          console.warn("Reklama ko'rsatishda xatolik:", e);
+        show_11523147().catch(e => {
+          console.warn("Reklama ko'rsatishda xatoliK:", e);
         });
       }
+    }
+
+    async function addBonusPoints(points) {
+      totalScore += points;
+      document.getElementById("scoreDisplay").innerText = `Jami ball: ${totalScore}`;
+      await sendScoreToBackend(points);
     }
 
     function decodeHTML(html) {
@@ -278,9 +289,10 @@
       }
 
       questionCount++;
-      // Har 3 ta savoldan keyin reklama ko'rsatiladi
-      if (questionCount % 3 === 0) {
-        triggerMonetagAd();
+      
+      // HAR 40 TA SAVOLDAN KEYIN ODDIY REKLAMA CHIQADI (BONUSSIZ)
+      if (questionCount % 40 === 0) {
+        triggerNormalAd();
       }
 
       setTimeout(() => {
@@ -314,8 +326,6 @@
     }
 
     async function toggleLeaderboard() {
-      triggerMonetagAd(); // Reyting bosilganda reklama chaqiriladi
-
       const card = document.getElementById("leaderCard");
       if (card.style.display === "block") {
         card.style.display = "none";
@@ -352,8 +362,6 @@
     }
 
     async function checkCertificate() {
-      triggerMonetagAd(); // Sertifikat bosilganda reklama chaqiriladi
-
       const certCard = document.getElementById("certCard");
       if (certCard.style.display === "block") {
         certCard.style.display = "none";
