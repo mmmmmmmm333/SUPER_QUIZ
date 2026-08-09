@@ -8,6 +8,10 @@
   <script src="https://telegram.org/js/telegram-web-app.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
+  <!-- ================= MONETAG SDK KODI ================= -->
+  <script src='//libtl.com/sdk.js' data-zone='11523147' data-sdk='show_11523147'></script>
+  <!-- ===================================================== -->
+
   <style>
     body {
       font-family: Arial, sans-serif;
@@ -129,20 +133,47 @@
     let currentQuestion = null;
     let totalScore = 0;
     let isProcessing = false;
+    let questionCount = 0;
 
-    // HTML maxsus belgilarini tozalash (masalan &quot; -> ")
+    // MONETAG IN-APP INTERSTITIAL REKLAMA SOZLAMASI
+    if (typeof show_11523147 === 'function') {
+      try {
+        show_11523147({
+          type: 'inApp',
+          inAppSettings: {
+            frequency: 2,
+            capping: 0.1,
+            interval: 30,
+            timeout: 5,
+            everyPage: false
+          }
+        });
+      } catch (e) {
+        console.warn("Monetag In-App ishga tushirishda xatolik:", e);
+      }
+    }
+
+    // MONETAG REWARDED REKLAMANI CHAQIRISH FUNKSIYASI
+    function triggerMonetagAd() {
+      if (typeof show_11523147 === 'function') {
+        show_11523147().then(() => {
+          console.log("Foydalanuvchi reklamani ko'rib bo'ldi");
+        }).catch(e => {
+          console.warn("Reklama ko'rsatishda xatolik:", e);
+        });
+      }
+    }
+
     function decodeHTML(html) {
       const txt = document.createElement("textarea");
       txt.innerHTML = html;
       return txt.value;
     }
 
-    // Har doim o'zbek tilida va xatosiz tarjima qiluvchi ikki bosqichli funksiya
     async function translateToUzbek(text) {
       if (!text) return "";
       const cleanText = decodeHTML(text);
 
-      // 1-urinish: Google Translate Asosiy liniya
       try {
         const url1 = `https://translate.googleapis.com/translate_a/single?client=gtx&sl=en&tl=uz&dt=t&q=${encodeURIComponent(cleanText)}`;
         const res1 = await fetch(url1);
@@ -157,7 +188,6 @@
         console.warn("1-tarjima liniyasi band, 2-siga o'tilmoqda...");
       }
 
-      // 2-urinish: Zaxira MyMemory API (Google to'lib qolsa o'zbekcha tarjima qilib beradi)
       try {
         const url2 = `https://api.mymemory.translated.net/get?q=${encodeURIComponent(cleanText)}&langpair=en|uz`;
         const res2 = await fetch(url2);
@@ -191,7 +221,6 @@
           const correctIndex = Math.floor(Math.random() * 4);
           rawOptions.splice(correctIndex, 0, qData.correct_answer);
 
-          // Savol va barcha javoblarni kafolatlangan o'zbek tiliga tarjima qilish
           const translatedQuestion = await translateToUzbek(rawQuestion);
           const translatedOptions = await Promise.all(
             rawOptions.map(opt => translateToUzbek(opt))
@@ -230,11 +259,11 @@
     }
 
     async function checkAnswer(selectedIndex, clickedBtn) {
-      if (isProcessing) return; // Qayta bosib ball to'plash to'liq bloklangan
+      if (isProcessing) return;
       isProcessing = true;
 
       const allButtons = document.querySelectorAll(".btn-option");
-      allButtons.forEach(btn => btn.disabled = true); // Tugmalar darhol muzlatiladi
+      allButtons.forEach(btn => btn.disabled = true);
 
       if (selectedIndex === currentQuestion.correctIndex) {
         clickedBtn.classList.add("correct");
@@ -248,7 +277,12 @@
         }
       }
 
-      // 1.2 soniyadan so'ng avtomatik keyingi o'zbekcha savolga o'tiladi
+      questionCount++;
+      // Har 3 ta savoldan keyin reklama ko'rsatiladi
+      if (questionCount % 3 === 0) {
+        triggerMonetagAd();
+      }
+
       setTimeout(() => {
         fetchNewQuestion();
       }, 1200);
@@ -280,6 +314,8 @@
     }
 
     async function toggleLeaderboard() {
+      triggerMonetagAd(); // Reyting bosilganda reklama chaqiriladi
+
       const card = document.getElementById("leaderCard");
       if (card.style.display === "block") {
         card.style.display = "none";
@@ -316,6 +352,8 @@
     }
 
     async function checkCertificate() {
+      triggerMonetagAd(); // Sertifikat bosilganda reklama chaqiriladi
+
       const certCard = document.getElementById("certCard");
       if (certCard.style.display === "block") {
         certCard.style.display = "none";
